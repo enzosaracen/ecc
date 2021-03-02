@@ -23,11 +23,23 @@ char *estrdup(char *s)
 
 void panic(char *fmt, ...)
 {
-	va_list list;
+	va_list l;
 	
-	va_start(list, fmt);
-	vfprintf(stderr, fmt, list);
-	va_end(list);
+	va_start(l, fmt);
+	vfprintf(stderr, fmt, l);
+	va_end(l);
+	fprintf(stderr, "\n");
+	exit(1);
+}
+
+void errorposf(char *fmt, ...)
+{
+	va_list l;
+
+	fprintf(stderr, "%s:%d:%d: ", src.path, src.line, src.col);
+	va_start(l, fmt);
+	vfprintf(stderr, fmt, l);
+	va_end(l);
 	fprintf(stderr, "\n");
 	exit(1);
 }
