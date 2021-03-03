@@ -1,9 +1,10 @@
-int main(int argv, char *argv[])
+#include "u.h"
+
+int main(int argc, char *argv[])
 {
 	int i;
 
 	ge = emalloc(sizeof(Env));
-	ge->sym = emalloc(HASHSIZE*sizeof(Sym));
 	if(argc < 2)
 		panic("usage: ecc file...");
 	for(i = 1; i < argc; i++) {

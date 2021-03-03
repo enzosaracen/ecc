@@ -23,7 +23,12 @@ typedef struct Env Env;
 struct Env {
 	Sym	*sym[HASHSIZE];
 	Env	*prev;
-} Env;
+};
+
+typedef struct Node Node;
+struct Node {
+	int k;
+};
 
 /* 
  *	util.c
@@ -44,6 +49,8 @@ void envpop(void);
 /*
  *	lex.c
  */
+void yyerror(char *s);
+int yylex(void);
 void compile(void);
 
 Env *ge;

@@ -1,5 +1,7 @@
 %{
 #include "u.h"
+
+static Sym *s;
 %}
 %union {
 	Node	*node;
@@ -10,25 +12,39 @@
 %token	<ival>	TINT
 %token	TDECL
 
-%type	<node>	prog stmt block slist decl expr
-
 %right 	'='
 %%
 prog:	
 |	prog stmt
 	;
+
 stmt:	decl ';'
 |	block
 	;
+
 block:	'{'	{ envpush(); }
      	slist
 	'}'	{ envpop(); }
      	;
+
 slist:
 |	slist stmt
 	;
+
 decl:	TDECL TID	{ install(ge->sym, $2, 0); }
 |	expr
 	;
-expr:	  TID '=' TINT	{ elookup() }
+
+expr:	TID '=' TINT
+    	{
+		s = lookup($1);
+		if(!s)
+			errorposf("%s undeclared\n", $1);
+		s->ival = $3;
+	}
     	;
+%%
+void yyerror(char *s)
+{
+	errorposf("%s", s);
+}

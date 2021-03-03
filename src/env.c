@@ -6,7 +6,7 @@ static unsigned hash(char *s)
 	unsigned h;
 
 	h = 5381;
-	while(c = *str++)
+	while(c = *s++)
 		h = ((h << 5) + h) + c;
 	return h % HASHSIZE;
 }
@@ -16,7 +16,7 @@ static Sym *symlookup(Sym *sym[], char *s)
 	Sym *p;
 
 	for(p = sym[hash(s)]; p; p = p->next)
-		if(strcmp(s, p->s) == 0)
+		if(strcmp(s, p->name) == 0)
 			return p;
 	return NULL;
 }
@@ -24,9 +24,11 @@ static Sym *symlookup(Sym *sym[], char *s)
 Sym *lookup(char *s)
 {
 	Sym *r;
+	Env *p;
 
-	for(; e; e = e->prev)
-		if(r = symlookup(e->sym, s))
+	p = ge;
+	for(; p; p = p->prev)
+		if(r = symlookup(p->sym, s))
 			return r;
 	return NULL;
 }
@@ -52,7 +54,6 @@ void envpush(void)
 
 	t = ge;
 	ge = emalloc(sizeof(Env));
-	ge->sym = emalloc(HASHSIZE*sizeof(Sym));
 	ge->prev = t;
 }
 
@@ -61,7 +62,6 @@ void envpop(void)
 	Env *t;
 
 	t = ge->prev;
-	free(ge->sym);
 	free(ge);
 	ge = t;
 }

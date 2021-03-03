@@ -1,4 +1,4 @@
-#include <u.h>
+#include "u.h"
 
 void *emalloc(int n)
 {
