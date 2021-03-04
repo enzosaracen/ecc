@@ -63,7 +63,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 6 "src/cc.y"
+#line 4 "src/cc.y"
 
 	Node	*node;
 	int	ival;

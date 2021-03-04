@@ -66,7 +66,7 @@ void errorposf(char *, ...);
  *	env.c
  */
 Sym *lookup(char *);
-Sym *install(Sym *[], char *, int);
+int install(Sym *[], char *);
 void envpush(void);
 void envpop(void);
 
@@ -83,5 +83,6 @@ void compile(void);
 void emit(char *, ...);
 void gen(Node *n);
 
-Env *ge;
-Src src;
+Env	*ge;
+Src	src;
+char	*outfile;

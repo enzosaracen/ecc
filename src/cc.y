@@ -56,16 +56,3 @@ void yyerror(char *s)
 {
 	errorposf("%s", s);
 }
-
-void prenv(Env *p, int indent)
-{
-	int i, j;
-	Sym *sp;
-
-	for(i = 0; i < HASHSIZE; i++)
-		for(sp = p->sym[i]; sp; sp = sp->next) {
-			for(j = 0; j < indent; j++)
-				printf("\t");
-			printf("%s:%d\n", sp->name, sp->ival);
-		}
-}
