@@ -45,8 +45,7 @@ int main(int argc, char *argv[])
 	if(!outfile)
 		outfile = "a.out";
 	*filesp = 0;
-	filesp = files;
-	while(*filesp) {
+	for(filesp = files; *filesp; filesp++) {
 		src.fp = fopen(*filesp, "r");
 		if(!src.fp)
 			panic("cannot open %s for reading", *filesp);
