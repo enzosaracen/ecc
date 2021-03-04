@@ -1,5 +1,6 @@
+# todo - clean this up
 CC 	= gcc
-CFLAGS	= -Wall -Wextra
+CFLAGS	= -Wall -Wextra -g
 OBJ	= src/env.o \
 	  src/lex.o \
 	  src/util.o \
@@ -8,18 +9,17 @@ OBJ	= src/env.o \
 HFILES	= src/u.h \
 	  src/y.tab.h
 
+cc:	src/cc.o $(OBJ) $(HFILES)
+	$(CC) $(CFLAGS) $(OBJ) src/cc.o -o $@
+
 .c.o:	$(HFILES)
 	$(CC) $(CFLAGS) -o $@ -c $<
-
-cc:	src/cc.o $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) src/cc.o -o $@
-	rm -f src/y.tab.h	# todo - organize this makefile so this command runs only when y.tab.h exists
 
 src/y.tab.h src/cc.o:	src/cc.y src/u.h
 	yacc -d src/cc.y
 	mv -f y.tab.h y.tab.c src
 	$(CC) $(CFLAGS) -o src/cc.o -c src/y.tab.c
-	rm -f src/y.tab.c	# keep y.tab.h until fully compiled
+	rm -f src/y.tab.c	# keep y.tab.h so do not have to run yacc each make
 
 .PHONY:	clean
 

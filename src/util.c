@@ -36,7 +36,7 @@ void errorposf(char *fmt, ...)
 {
 	va_list l;
 
-	fprintf(stderr, "%s:%d:%d: ", src.path, src.line, src.col);
+	fprintf(stderr, "%s:%d:%d: ", src.name, src.line, src.col);
 	va_start(l, fmt);
 	vfprintf(stderr, fmt, l);
 	va_end(l);

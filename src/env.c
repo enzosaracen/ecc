@@ -6,7 +6,7 @@ static unsigned hash(char *s)
 	unsigned h;
 
 	h = 5381;
-	while(c = *s++)
+	while((c = *s++))
 		h = ((h << 5) + h) + c;
 	return h % HASHSIZE;
 }
@@ -28,12 +28,13 @@ Sym *lookup(char *s)
 
 	p = ge;
 	for(; p; p = p->prev)
-		if(r = symlookup(p->sym, s))
+		if((r = symlookup(p->sym, s)))
 			return r;
 	return NULL;
 }
 
-Sym *install(Sym *sym[], char *s, int i)
+/* return 1 if symbol already exists */
+int install(Sym *sym[], char *s)
 {
 	Sym *p;
 	unsigned h;
@@ -41,11 +42,12 @@ Sym *install(Sym *sym[], char *s, int i)
 	if(!(p = symlookup(sym, s))) {
 		p = emalloc(sizeof(Sym));
 		h = hash(s);
+		p->name = s;
 		p->next = sym[h];
 		sym[h] = p;
+		return 0;
 	}
-	p->ival = i;
-	return p;
+	return 1;
 }
 
 void envpush(void)
