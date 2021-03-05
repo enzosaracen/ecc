@@ -28,9 +28,12 @@ char next(void)
 {
 	char c;
 
-	if(--fin.c < 0)
+	if(--fin.c <= 0) {
 		fill();
-	c = *fin.p--;
+		if(fin.c == 0)
+			return EOF;
+	}
+	c = *fin.p++;
 	if(c == '\n') {
 		prevline = src.line;
 		prevcol = src.col;
@@ -61,8 +64,10 @@ int yylex(void)
 		goto LEXID;
 	switch(c) {
 	case EOF:
+		printf("<eof>\n");
 		return 0;
 	default:
+		printf("<%c>\n", c);
 		return c;
 	}
 LEXNUM:
@@ -73,6 +78,7 @@ LEXNUM:
 	}
 	peek = c;
 	yylval.ival = i;
+	printf("<int, %d>\n", yylval.ival);
 	return TINT;
 LEXID:
 	for(i = 0; isalnum(c); i++) {
@@ -83,9 +89,12 @@ LEXID:
 	}
 	peek = c;
 	buf[i] = 0;
-	if(strcmp(buf, "decl") == 0)
+	if(strcmp(buf, "decl") == 0) {
+		printf("<decl>\n");
 		return TDECL;
+	}
 	yylval.sval = estrdup(buf);
+	printf("<id, '%s'>\n", yylval.sval);
 	return TID;
 }
 
