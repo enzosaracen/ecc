@@ -59,8 +59,7 @@ int main(int argc, char *argv[])
 			panic("cannot open %s for reading", *filesp);
 		src.name = *filesp;
 		src.line = src.col = 1;
-		lexinit();
-		yyparse();
+		compile();
 	}
 	return 0;
 }

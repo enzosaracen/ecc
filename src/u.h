@@ -77,6 +77,8 @@ void lexinit(void);
 int yylex(void);
 void compile(void);
 
+void yyerror(char *s);
+
 Src	src;
 Env	*envstack;
 FILE	*outfile;

@@ -1,6 +1,9 @@
 #include "u.h"
 #include "y.tab.h"
 
+#define MAXID 32
+#define NOPEEK -2
+
 int prevline, prevcol;
 char peek;
 struct {
@@ -10,15 +13,13 @@ struct {
 
 void lexinit(void)
 {
-	prevline = src.line;
-	prevcol = src.col;
+	peek = NOPEEK;
+	prevline = prevcol = 1;
 }
 
 void fill(void)
 {
-	char *t;
-
-	if((fin.c = read(src.fp, fin.b, BUFSIZ)) == -1)
+	if((fin.c = fread(fin.b, 1, BUFSIZ, src.fp)) == -1)
 		panic("error reading file %s", src.name);
 	fin.p = fin.b;
 }
@@ -42,18 +43,18 @@ char next(void)
 	return c;
 }
 
-void bkup(char c)
-{
-	src.line = prevline;
-	src.col = prevcol;
-}
-
 int yylex(void)
 {
-	int v;
-	char c, *p;
+	int i;
+	char c, buf[MAXID];
 
-	while(isspace(c = next()));
+	if(peek != NOPEEK) {
+		c = peek;
+		peek = NOPEEK;
+	} else
+		c = next();
+
+	for(; isspace(c); c = next());
 	if(isdigit(c)) 
 		goto LEXNUM;
 	if(isalpha(c))
@@ -65,23 +66,31 @@ int yylex(void)
 		return c;
 	}
 LEXNUM:
-	v = 0;
+	i = 0;
 	while(isdigit(c)) {
-		v = v*10 + c-'0';
+		i = i*10 + c-'0';
 		c = next();
 	}
-	bkup(c);
-	yylval.ival = v;
+	peek = c;
+	yylval.ival = i;
 	return TINT;
 LEXID:
-	while(isalnum(c)) {
-		*p++ = c;
+	for(i = 0; isalnum(c); i++) {
+		if(i >= MAXID-2)
+			errorposf("identifier too long");
+		buf[i] = c;
 		c = next();
 	}
-	bkup(c);
-	*p = 0;
+	peek = c;
+	buf[i] = 0;
 	if(strcmp(buf, "decl") == 0)
 		return TDECL;
 	yylval.sval = estrdup(buf);
 	return TID;
+}
+
+void compile(void)
+{
+	lexinit();
+	yyparse();
 }
