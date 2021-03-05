@@ -83,7 +83,7 @@ LEXNUM:
 LEXID:
 	for(i = 0; isalnum(c); i++) {
 		if(i >= MAXID-2)
-			errorposf("identifier too long");
+			yyerror("identifier too long");
 		buf[i] = c;
 		c = next();
 	}

@@ -9,7 +9,7 @@ OBJ	= src/env.o \
 HFILES	= src/u.h \
 	  src/y.tab.h
 
-cc:	src/cc.o $(OBJ) $(HFILES)
+ecc:	src/cc.o $(OBJ) $(HFILES)
 	$(CC) $(CFLAGS) $(OBJ) src/cc.o -o $@
 
 .c.o:	$(HFILES)
@@ -24,4 +24,4 @@ src/y.tab.h src/cc.o:	src/cc.y src/u.h
 .PHONY:	clean
 
 clean:
-	rm -f cc $(OBJ) src/cc.o
+	rm -f ecc $(OBJ) src/cc.o

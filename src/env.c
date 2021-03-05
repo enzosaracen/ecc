@@ -1,6 +1,6 @@
 #include "u.h"
 
-static unsigned hash(char *s)
+unsigned hash(char *s)
 {
 	int c;
 	unsigned h;
@@ -11,7 +11,7 @@ static unsigned hash(char *s)
 	return h % HASHSIZE;
 }
 
-static Sym *symlookup(Sym *sym[], char *s)
+Sym *slookup(Sym *sym[], char *s)
 {
 	Sym *p;
 
@@ -28,7 +28,7 @@ Sym *lookup(char *s)
 
 	p = envstack;
 	for(; p; p = p->prev)
-		if((r = symlookup(p->sym, s)))
+		if((r = slookup(p->sym, s)))
 			return r;
 	return NULL;
 }
@@ -38,7 +38,7 @@ int install(Sym *sym[], char *s)
 	Sym *p;
 	unsigned h;
 
-	if(!(p = symlookup(sym, s))) {
+	if(!(p = slookup(sym, s))) {
 		p = emalloc(sizeof(Sym));
 		h = hash(s);
 		p->name = s;
