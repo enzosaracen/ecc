@@ -5,10 +5,11 @@
 int main(int argc, char *argv[])
 {
 	int i;
-	char *p, *bufp, **filesp, buf[MAX], *files[MAX];
+	char *p, *bufp, **filesp, buf[MAX], *files[MAX], *outname;
 
+	outname = NULL;
 	filesp = files;
-	ge = emalloc(sizeof(Env));
+	envstack = emalloc(sizeof(Env));
 	if(argc < 2)
 		panic("usage: ecc [-options] files");
 	for(i = 1; i < argc; i++) {
@@ -25,11 +26,11 @@ int main(int argc, char *argv[])
 						*bufp++ = *p;
 					}
 					*bufp = 0;
-					outfile = estrdup(buf);
+					outname = estrdup(buf);
 				} else {
 					if(i+1 >= argc)
 						panic("missing filename after -o");
-					outfile = argv[++i];
+					outname = argv[++i];
 				}
 				break;
 			default:
@@ -42,16 +43,24 @@ int main(int argc, char *argv[])
 			*filesp++ = argv[i];
 		}
 	}
+	/*
+	 * todo - only open outfile when need to b/c if an infile is unreadable, will create an empty outfile (or in any compiler error as well).
+	 * or maybe just delete outfile in any error case, idk
+	 */
+	if(!outname)
+		outname = "a.out";
+	outfile = fopen(outname, "w");
 	if(!outfile)
-		outfile = "a.out";
+		panic("cannot open %s for writing", outname);
 	*filesp = 0;
 	for(filesp = files; *filesp; filesp++) {
 		src.fp = fopen(*filesp, "r");
 		if(!src.fp)
 			panic("cannot open %s for reading", *filesp);
-		src.name = argv[i];
+		src.name = *filesp;
 		src.line = src.col = 1;
-		compile();
+		lexinit();
+		yyparse();
 	}
 	return 0;
 }

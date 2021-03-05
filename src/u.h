@@ -73,16 +73,10 @@ void envpop(void);
 /*
  *	lex.c
  */
-void yyerror(char *s);
+void lexinit(void);
 int yylex(void);
 void compile(void);
 
-/*
- *	gen.c
- */
-void emit(char *, ...);
-void gen(Node *n);
-
-Env	*ge;
 Src	src;
-char	*outfile;
+Env	*envstack;
+FILE	*outfile;

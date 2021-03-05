@@ -36,8 +36,8 @@ slist:
 
 decl:	TDECL TID
     	{
-		if(install(ge->sym, $2))
-			errorposf("redeclaration of %s", $2);
+		if(!install(envstack->sym, $2))
+			errorposf("redeclaration of '%s'", $2);
 	}
 |	expr
 	;

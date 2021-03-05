@@ -26,14 +26,13 @@ Sym *lookup(char *s)
 	Sym *r;
 	Env *p;
 
-	p = ge;
+	p = envstack;
 	for(; p; p = p->prev)
 		if((r = symlookup(p->sym, s)))
 			return r;
 	return NULL;
 }
 
-/* return 1 if symbol already exists */
 int install(Sym *sym[], char *s)
 {
 	Sym *p;
@@ -45,25 +44,25 @@ int install(Sym *sym[], char *s)
 		p->name = s;
 		p->next = sym[h];
 		sym[h] = p;
-		return 0;
+		return 1;
 	}
-	return 1;
+	return 0;
 }
 
 void envpush(void)
 {
 	Env *t;
 
-	t = ge;
-	ge = emalloc(sizeof(Env));
-	ge->prev = t;
+	t = envstack;
+	envstack = emalloc(sizeof(Env));
+	envstack->prev = t;
 }
 
 void envpop(void)
 {
 	Env *t;
 
-	t = ge->prev;
-	free(ge);
-	ge = t;
+	t = envstack->prev;
+	free(envstack);
+	envstack = t;
 }

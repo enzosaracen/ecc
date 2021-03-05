@@ -1,19 +1,41 @@
 #include "u.h"
 #include "y.tab.h"
 
-static char buf[1024];
 int prevline, prevcol;
+char peek;
+struct {
+	char b[BUFSIZ], *p;
+	int c;		
+} fin;
+
+void lexinit(void)
+{
+	prevline = src.line;
+	prevcol = src.col;
+}
+
+void fill(void)
+{
+	char *t;
+
+	if((fin.c = read(src.fp, fin.b, BUFSIZ)) == -1)
+		panic("error reading file %s", src.name);
+	fin.p = fin.b;
+}
 
 char next(void)
 {
 	char c;
 
-	c = fgetc(src.fp);
+	if(--fin.c < 0)
+		fill();
+	c = *fin.p--;
 	if(c == '\n') {
 		prevline = src.line;
+		prevcol = src.col;
 		src.line++;
-	}
-	else if(isprint(c)) {
+		src.col = 1;
+	} else if(isprint(c)) {
 		prevcol = src.col;
 		src.col++;
 	}
@@ -22,7 +44,6 @@ char next(void)
 
 void bkup(char c)
 {
-	ungetc(c, src.fp);
 	src.line = prevline;
 	src.col = prevcol;
 }
@@ -32,9 +53,6 @@ int yylex(void)
 	int v;
 	char c, *p;
 
-	p = buf;
-	prevline = src.line;
-	prevcol = src.col;
 	while(isspace(c = next()));
 	if(isdigit(c)) 
 		goto LEXNUM;
@@ -66,9 +84,4 @@ LEXID:
 		return TDECL;
 	yylval.sval = estrdup(buf);
 	return TID;
-}
-
-void compile(void)
-{
-	yyparse();
 }
