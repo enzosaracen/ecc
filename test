@@ -1,6 +1,5 @@
 decl f;
 {
 	f = 10;
-	decl fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 	decl f;
 }

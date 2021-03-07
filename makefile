@@ -1,8 +1,7 @@
 # todo - clean this up
 CC 	= gcc
 CFLAGS	= -Wall -Wextra -g
-OBJ	= src/env.o \
-	  src/lex.o \
+OBJ	= src/lex.o \
 	  src/util.o \
 	  src/main.o
 

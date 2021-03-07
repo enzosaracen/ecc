@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define HASHSIZE 16
+#define NHASH 16
+#define NSYMB 1024
 
 typedef struct Src {
 	FILE	*fp;
@@ -14,44 +15,10 @@ typedef struct Src {
 
 typedef struct Sym Sym;
 struct Sym {
-	char	*name;
-	Sym	*next;
-};
-
-typedef struct Env Env;
-struct Env {
-	Sym	*sym[HASHSIZE];
-	Env	*prev;
-};
-
-enum {
-	NASSN,
-	NBINOP,
-	NID,
-	NINT,
-	NBLOCK,
-};
-
-typedef struct Node Node;
-struct Node {
-	int type;
-	union {
-		struct {
-			Node *l;
-			Node *r;
-		} Assn;
-		struct {
-			int op;
-			Node *l;
-			Node *r;
-		} Binop;
-		struct {
-			Sym *sym;	
-		} Id;
-		struct {
-			int v;
-		} Int;
-	};
+	int		toktype;
+	char		*name;
+	Sym		*next;
+	unsigned	block;	
 };
 
 /* 
@@ -63,22 +30,16 @@ void panic(char *, ...);
 void errorposf(char *, ...);
 
 /*
- *	env.c
- */
-Sym *lookup(char *);
-int install(Sym *[], char *);
-void envpush(void);
-void envpop(void);
-
-/*
  *	lex.c
  */
 void lexinit(void);
+Sym *lookup(void);
 int yylex(void);
 void compile(void);
 
 void yyerror(char *s);
 
 Src	src;
-Env	*envstack;
 FILE	*outfile;
+char	symb[NSYMB];
+Sym	*hash[NHASH];

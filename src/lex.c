@@ -1,27 +1,58 @@
 #include "u.h"
 #include "y.tab.h"
 
-#define MAXID 32
 #define NOPEEK -2
 
-int prevline, prevcol;
 char peek;
 struct {
 	char b[BUFSIZ], *p;
 	int c;		
 } fin;
 
+struct {
+	char *s;
+	int toktype;
+} rsvd[] = {
+	{"decl", TDECL,},
+	{0},
+};
+
 void lexinit(void)
 {
+	int i, j;
+	Sym *s;
+
 	peek = NOPEEK;
-	prevline = prevcol = 1;
+	for(i = 0; rsvd[i].s; i++) {
+		for(j = 0; rsvd[i].s[j]; j++)
+			symb[j] = rsvd[i].s[j];
+		s = lookup();
+		s->toktype = rsvd[i].toktype;
+	}
 }
 
-void fill(void)
+Sym *lookup(void)
 {
-	if((fin.c = fread(fin.b, 1, BUFSIZ, src.fp)) == -1)
-		panic("error reading file %s", src.name);
-	fin.p = fin.b;
+	Sym *s;
+	int c;
+	unsigned h;
+	char *cp;
+
+	cp = symb;
+	h = 5381;
+	while((c = *cp++))
+		h = ((h << 5) + h) + c;
+	h %= NHASH;
+
+	for(s = hash[h]; s; s = s->next)
+		if(strcmp(s->name, symb) == 0)
+			return s;
+	s = emalloc(sizeof(Sym));
+	s->name = estrdup(symb);
+	s->next = hash[h];
+	hash[h] = s;
+	s->toktype = TID;
+	return s;
 }
 
 char next(void)
@@ -29,27 +60,26 @@ char next(void)
 	char c;
 
 	if(--fin.c <= 0) {
-		fill();
-		if(fin.c == 0)
+		fin.c = fread(fin.b, 1, BUFSIZ, src.fp);
+		if(fin.c == -1) 
+			panic("error reading file %s", src.name);
+		else if(fin.c == 0)
 			return EOF;
+		fin.p = fin.b;
 	}
 	c = *fin.p++;
 	if(c == '\n') {
-		prevline = src.line;
-		prevcol = src.col;
 		src.line++;
 		src.col = 1;
-	} else if(isprint(c)) {
-		prevcol = src.col;
+	} else if(isprint(c))
 		src.col++;
-	}
 	return c;
 }
 
 int yylex(void)
 {
 	int i;
-	char c, buf[MAXID];
+	char c, *cp;
 
 	if(peek != NOPEEK) {
 		c = peek;
@@ -60,8 +90,10 @@ int yylex(void)
 	for(; isspace(c); c = next());
 	if(isdigit(c)) 
 		goto LEXNUM;
-	if(isalpha(c))
+	if(isalpha(c)) {
+		cp = symb;
 		goto LEXID;
+	}
 	switch(c) {
 	case EOF:
 		printf("<eof>\n");
@@ -81,21 +113,15 @@ LEXNUM:
 	printf("<int, %d>\n", yylval.ival);
 	return TINT;
 LEXID:
-	for(i = 0; isalnum(c); i++) {
-		if(i >= MAXID-2)
-			yyerror("identifier too long");
-		buf[i] = c;
+	while(isalnum(c) || c == '_') {
+		*cp++ = c;
 		c = next();
 	}
 	peek = c;
-	buf[i] = 0;
-	if(strcmp(buf, "decl") == 0) {
-		printf("<decl>\n");
-		return TDECL;
-	}
-	yylval.sval = estrdup(buf);
-	printf("<id, '%s'>\n", yylval.sval);
-	return TID;
+	*cp = 0;
+	yylval.sym = lookup();
+	printf("<id, %s>\n", symb);
+	return yylval.sym->toktype;
 }
 
 void compile(void)

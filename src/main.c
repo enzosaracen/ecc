@@ -9,7 +9,6 @@ int main(int argc, char *argv[])
 
 	outname = NULL;
 	filesp = files;
-	envstack = emalloc(sizeof(Env));
 	if(argc < 2)
 		panic("usage: ecc [-options] files");
 	for(i = 1; i < argc; i++) {
