@@ -13,7 +13,15 @@ struct {
 	char *s;
 	int toktype;
 } rsvd[] = {
-	{"decl", TDECL,},
+	{"char",	TCHAR},
+	{"else",	TELSE},
+	{"float",	TFLOAT},
+	{"for",		TFOR},
+	{"if",		TIF},
+	{"int",		TINT,},
+	{"return",	TRETURN},
+	{"void",	TVOID},
+	{"while",	TWHILE},
 	{0},
 };
 
@@ -26,6 +34,7 @@ void lexinit(void)
 	for(i = 0; rsvd[i].s; i++) {
 		for(j = 0; rsvd[i].s[j]; j++)
 			symb[j] = rsvd[i].s[j];
+		symb[j] = 0;
 		s = lookup();
 		s->toktype = rsvd[i].toktype;
 	}

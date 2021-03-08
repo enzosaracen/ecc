@@ -5,9 +5,9 @@
 	int	ival;
 	Sym	*sym;
 }
-%token	<sval>	TID
-%token	<ival>	TINT
-%token	TDECL
+%token	<sym>	TID
+%token	<ival>	TICONST
+%token	TCHAR TELSE TFLOAT TFOR TIF TINT TRETURN TVOID TWHILE
 
 %%
 prog:	
@@ -18,20 +18,33 @@ stmt:	decl ';'
 |	block
 	;
 
-block:	'{'
-     	slist
-	'}'
+block:	'{' slist '}'
      	;
 
 slist:
 |	slist stmt
 	;
 
-decl:	TDECL TID
-|	expr
+decl:	type declarator
 	;
 
-expr:	TID '=' TINT
+declarator:	direct
+|		ptr direct
+		;
+
+ptr:	'*'
+|	'*' ptr
+	;
+
+direct:	TID
+|	'(' declarator ')'
+|	direct '[' TICONST ']'
+	;
+
+type:	TINT
+|	TCHAR
+|	TVOID
+|	TFLOAT
     	;
 %%
 void yyerror(char *s)

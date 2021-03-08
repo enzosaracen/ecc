@@ -8,11 +8,11 @@ OBJ	= src/lex.o \
 HFILES	= src/u.h \
 	  src/y.tab.h
 
+src/%.o:	src/%.c $(HFILES)
+	$(CC) $(CFLAGS) -o $@ -c $<
+
 ecc:	src/cc.o $(OBJ) $(HFILES)
 	$(CC) $(CFLAGS) $(OBJ) src/cc.o -o $@
-
-.c.o:	$(HFILES)
-	$(CC) $(CFLAGS) -o $@ -c $<
 
 src/y.tab.h src/cc.o:	src/cc.y src/u.h
 	yacc -d src/cc.y

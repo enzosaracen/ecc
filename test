@@ -1,5 +1,5 @@
-decl f;
+int f;
 {
-	f = 10;
-	decl f;
+	int *f;
+	int f;
 }

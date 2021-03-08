@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define NHASH 16
+#define NHASH 1024
 #define NSYMB 1024
 
 typedef struct Src {
