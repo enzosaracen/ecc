@@ -220,6 +220,10 @@ int yylex(void)
 			return LELLIPSES;
 		}
 		break;
+	case '"':
+		while((c2 = next()) != '"');
+		return LSTRING;
+		break;
 	default:
 		return c;
 	peek = c2;
