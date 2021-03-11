@@ -11,17 +11,40 @@ struct {
 
 struct {
 	char *s;
-	int toktype;
+	int lexical;
 } rsvd[] = {
-	{"char",	TCHAR},
-	{"else",	TELSE},
-	{"float",	TFLOAT},
-	{"for",		TFOR},
-	{"if",		TIF},
-	{"int",		TINT,},
-	{"return",	TRETURN},
-	{"void",	TVOID},
-	{"while",	TWHILE},
+	{"sizeof",	LSIZEOF},
+	{"void",	LVOID},
+	{"char",	LCHAR},
+	{"short",	LSHORT},
+	{"int",		LINT},
+	{"long",	LLONG},
+	{"float",	LFLOAT},
+	{"double",	LDOUBLE},
+	{"signed",	LSIGNED},
+	{"unsigned",	LUNSIGNED},
+	{"union",	LUNION},
+	{"struct",	LSTRUCT},
+	{"enum",	LENUM},
+	{"if",		LIF},
+	{"else",	LELSE},
+	{"switch",	LSWITCH},
+	{"case",	LCASE},
+	{"default",	LDEFAULT},
+	{"while",	LWHILE},
+	{"do",		LDO},
+	{"for",		LFOR},
+	{"goto",	LGOTO},
+	{"continue",	LCONTINUE},
+	{"break",	LBREAK},
+	{"return",	LRETURN},
+	{"auto",	LAUTO},
+	{"register",	LREGISTER},
+	{"extern",	LEXTERN},
+	{"static",	LSTATIC},
+	{"typedef",	LTYPEDEF},
+	{"const",	LCONST},
+	{"volatile",	LVOLATILE},
 	{0},
 };
 
@@ -36,7 +59,7 @@ void lexinit(void)
 			symb[j] = rsvd[i].s[j];
 		symb[j] = 0;
 		s = lookup();
-		s->toktype = rsvd[i].toktype;
+		s->lexical = rsvd[i].lexical;
 	}
 }
 
@@ -60,7 +83,7 @@ Sym *lookup(void)
 	s->name = estrdup(symb);
 	s->next = hash[h];
 	hash[h] = s;
-	s->toktype = TID;
+	s->lexical = LID;
 	return s;
 }
 
@@ -88,7 +111,8 @@ char next(void)
 int yylex(void)
 {
 	int i;
-	char c, *cp;
+	int c;
+	char c2, *cp;
 
 	if(peek != NOPEEK) {
 		c = peek;
@@ -105,11 +129,101 @@ int yylex(void)
 	}
 	switch(c) {
 	case EOF:
-		printf("<eof>\n");
 		return 0;
+	case '+':
+		c2 = next();
+		if(c2 == '=')
+			return LPE;
+		else if(c2 == '+')
+			return LPP;
+		break;
+	case '-':
+		c2 = next();
+		if(c2 == '=')
+			return LME;
+		else if(c2 == '-')
+			return LMM;
+		else if(c2 == '>')
+			return LARROW;
+		break;
+	case '*':
+		c2 = next();
+		if(c2 == '=')
+			return LMLE;
+		break;
+	case '/':
+		c2 = next();
+		if(c2 == '=')
+			return LDVE;
+		break;
+	case '%':
+		c2 = next();
+		if(c2 == '=')
+			return LMDE;
+		break;
+	case '>':
+		c2 = next();
+		if(c2 == '=')
+			return LGE;
+		else if(c2 == '>') {
+			c2 = next();
+			if(c2 == '=')
+				return LRSHE;
+			c = LRSH;
+		}
+		break;
+	case '<':
+		c2 = next();
+		if(c2 == '=')
+			return LLE;
+		else if(c2 == '<') {
+			c2 = next();
+			if(c2 == '=')
+				return LLSHE;
+			c = LLSH;
+		}
+		break;
+	case '!':
+		c2 = next();
+		if(c2 == '=')
+			return LNE;
+		break;
+	case '=':
+		c2 = next();
+		if(c2 == '=')
+			return LEQ;
+		break;
+	case '&':
+		c2 = next();
+		if(c2 == '&')
+			return LANDAND;
+		else if(c2 == '=')
+			return LANDE;
+		break;
+	case '|':
+		c2 = next();
+		if(c2 == '|')
+			return LOROR;
+		else if(c2 == '=')
+			return LORE;
+		break;
+	case '^':
+		c2 = next();
+		if(c2 == '=')
+			return LXORE;
+		break;
+	case '.':
+		c2 = next();
+		if(c2 == '.') {
+			if(next() != '.')
+				errorposf("expected '...'");
+			return LELLIPSES;
+		}
+		break;
 	default:
-		printf("<%c>\n", c);
 		return c;
+	peek = c2;
+	return c; 
 	}
 LEXNUM:
 	i = 0;
@@ -118,9 +232,7 @@ LEXNUM:
 		c = next();
 	}
 	peek = c;
-	yylval.ival = i;
-	printf("<int, %d>\n", yylval.ival);
-	return TINT;
+	return LNUM;
 LEXID:
 	while(isalnum(c) || c == '_') {
 		*cp++ = c;
@@ -129,8 +241,7 @@ LEXID:
 	peek = c;
 	*cp = 0;
 	yylval.sym = lookup();
-	printf("<id, %s>\n", symb);
-	return yylval.sym->toktype;
+	return yylval.sym->lexical;
 }
 
 void compile(void)

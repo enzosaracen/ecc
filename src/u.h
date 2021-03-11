@@ -15,7 +15,7 @@ typedef struct Src {
 
 typedef struct Sym Sym;
 struct Sym {
-	int		toktype;
+	int		lexical;
 	char		*name;
 	Sym		*next;
 	unsigned	block;	
