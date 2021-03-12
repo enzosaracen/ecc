@@ -2,6 +2,7 @@ CC 	= gcc
 CFLAGS	= -Wall -Wextra -g
 OBJ	= src/lex.o \
 	  src/util.o \
+	  src/ast.o \
 	  src/main.o
 
 HFILES	= src/u.h \
@@ -17,7 +18,7 @@ src/y.tab.h src/cc.o:	src/cc.y src/u.h
 	yacc -d src/cc.y
 	mv -f y.tab.h y.tab.c src
 	$(CC) $(CFLAGS) -o src/cc.o -c src/y.tab.c
-	rm -f src/y.tab.c	# keep y.tab.h so do not have to run yacc each make
+	rm -f src/y.tab.c	# keep y.tab.h so dont have to run yacc each make
 
 .PHONY:	clean
 

@@ -3,9 +3,11 @@
 %}
 %union {
 	 Sym *sym;
+	 Node *node;
+	 Type *type;
 }
 
-%type	prog xdecl fndef decl dlist dspec init ilist sue subody sudecl sudecor sudecorlist sqlist enumbody enumlist decor ptr ddecor parms pdecl
+%type	xdecl fndef decl dlist dspec init ilist sue subody sudecl sudecor sudecorlist sqlist enumbody enumlist decor ptr ddecor parms pdecl
 %type	idlist adecor dadecor tname stmt label block slist sel iter jmp exprlist expr cast uexpr pexpr oexpr oelist qlist qual scspec tspec
 
 %token	LPE LME LMLE LDVE LMDE LLSHE LRSHE LANDE LXORE LORE LOROR LANDAND LEQ LNE LLE LGE LLSH LRSH LARROW LPP LMM LSIZEOF
@@ -180,57 +182,57 @@ slist:
 |	slist stmt
 
 sel:
-	LIF '(' expr ')' stmt
-|	LIF '(' expr ')' stmt LELSE stmt
-|	LSWITCH '(' expr ')' stmt
+	LIF '(' expr ')' stmt				{ $$ = new(OIF, $3, $5); }
+|	LIF '(' expr ')' stmt LELSE stmt		{ $$ = new(OIF, $3, new(OLIST, $5, $7)); }
+|	LSWITCH '(' expr ')' stmt			{ $$ = new(OSWITCH, $3, $5); }
 
 iter:
-	LWHILE '(' expr ')' stmt
-|	LDO stmt LWHILE '(' expr ')' ';'
-|	LFOR '(' oexpr ';' oexpr ';' oexpr ')' stmt
+	LWHILE '(' expr ')' stmt			{ $$ = new(OWHILE, $3, $5); }
+|	LDO stmt LWHILE '(' expr ')' ';'		{ $$ = new(ODOWHILE, $2, $5); }
+|	LFOR '(' oexpr ';' oexpr ';' oexpr ')' stmt	{ $$ = new(OFOR, $3, new(OLIST, $5, new(OLIST, $7, $9))); }
 
 jmp:
-	LGOTO LID ';'
-|	LCONTINUE ';'
-|	LBREAK ';'
-|	LRETURN oexpr ';'
+	LGOTO LID ';'					{ $$ = new(OGOTO, $2, NULL); }
+|	LCONTINUE ';'					{ $$ = new(OCONTINUE, NULL, NULL); }
+|	LBREAK ';'					{ $$ = new(OBREAK, NULL, NULL); }
+|	LRETURN oexpr ';'				{ $$ = new(ORETURN, $2, NULL); }
 
 exprlist:
 	expr
-|	exprlist ',' exprlist
+|	exprlist ',' exprlist				{ $$ = new(OLIST, $1, $3); }
 
 expr:
     	uexpr
-|	expr '*' expr
-|	expr '/' expr
-|	expr '%' expr
-|	expr '+' expr
-|	expr '-' expr
-|	expr LLSH expr
-|	expr LRSH expr
-|	expr '<' expr
-|	expr LLE expr
-|	expr '>' expr
-|	expr LGE expr
-|	expr LEQ expr
-|	expr LNE expr
-|	expr '&' expr
-|	expr '^' expr
-|	expr '|' expr
-|	expr LANDAND expr
-|	expr LOROR expr
-|	expr '?' expr ':' expr
-|	expr '=' expr
-|	expr LPE expr
-|	expr LME expr
-|	expr LMLE expr
-|	expr LDVE expr
-|	expr LMDE expr
-|	expr LLSHE expr
-|	expr LRSHE expr
-|	expr LANDE expr
-|	expr LXORE expr
-|	expr LORE expr
+|	expr '*' expr					{ $$ = new('*', $1, $3); }
+|	expr '/' expr					{ $$ = new('/', $1, $3); }
+|	expr '%' expr					{ $$ = new('%', $1, $3); }
+|	expr '+' expr					{ $$ = new(OSUB, $1, $3); }
+|	expr '-' expr					{ $$ = new(OADD, $1, $3); }
+|	expr LLSH expr					{ $$ = new(OLSH, $1, $3); }
+|	expr LRSH expr					{ $$ = new(ORSH, $1, $3); }
+|	expr '<' expr					{ $$ = new('<', $1, $3); }
+|	expr LLE expr					{ $$ = new(OLE, $1, $3); }
+|	expr '>' expr					{ $$ = new('>', $1, $3); }
+|	expr LGE expr					{ $$ = new(OGE, $1, $3); }
+|	expr LEQ expr					{ $$ = new(OEQ, $1, $3); }
+|	expr LNE expr					{ $$ = new(ONE, $1, $3); }
+|	expr '&' expr					{ $$ = new(OAND, $1, $3); }
+|	expr '^' expr					{ $$ = new('^', $1, $3); }
+|	expr '|' expr					{ $$ = new('|', $1, $3); }
+|	expr LANDAND expr				{ $$ = new(OANDAND, $1, $3); }
+|	expr LOROR expr					{ $$ = new(OOROR, $1, $3); }
+|	expr '=' expr					{ $$ = new('=', $1, $3); }
+|	expr LPE expr					{ $$ = new(OPE, $1, $3); }
+|	expr LME expr					{ $$ = new(OME, $1, $3); }
+|	expr LMLE expr					{ $$ = new(OMLE, $1, $3); }
+|	expr LDVE expr					{ $$ = new(ODVE, $1, $3); }
+|	expr LMDE expr					{ $$ = new(OMDE, $1, $3); }
+|	expr LLSHE expr					{ $$ = new(OLSHE, $1, $3); }
+|	expr LRSHE expr					{ $$ = new(ORSHE, $1, $3); }
+|	expr LANDE expr					{ $$ = new(OANDE, $1, $3); }
+|	expr LXORE expr					{ $$ = new(OXORE, $1, $3); }
+|	expr LORE expr					{ $$ = new(OORE, $1, $3); }
+|	expr '?' expr ':' expr				{ $$ = new('?', $1, new(OLIST, $3, $5)); }
 
 cast:
 	uexpr
@@ -238,16 +240,16 @@ cast:
 
 uexpr:
 	pexpr
-|	LPP uexpr
-|	LMM uexpr
-|	'&' cast
-|	'*' cast
-|	'+' cast
-|	'-' cast
-|	'~' cast
-|	'!' cast
-|	LSIZEOF uexpr
-|	LSIZEOF '(' tname ')'
+|	LPP uexpr					{ $$ = new(OPP, $2, NULL); }
+|	LMM uexpr					{ $$ = new(OMM, $2, NULL); }
+|	'&' cast					{ $$ = new(OADDR, $2, NULL); }
+|	'*' cast					{ $$ = new('*', $2, NULL); }
+|	'+' cast					{ $$ = new(OPOS, $2, NULL); }
+|	'-' cast					{ $$ = new(ONEG, $2, NULL); }
+|	'~' cast					{ $$ = new('~', $2, NULL); }
+|	'!' cast					{ $$ = new('!', $2, NULL); }
+|	LSIZEOF uexpr					{ $$ = new(OSIZEOF, $2, NULL); }
+|	LSIZEOF '(' tname ')'				{ $$ = new(OSIZEOF, $2, NULL); }
 	
 pexpr:
 	'(' exprlist ')'

@@ -3,6 +3,7 @@
 
 #define NOPEEK -2
 
+int tdef;
 char peek;
 struct {
 	char b[BUFSIZ], *p;
@@ -11,7 +12,7 @@ struct {
 
 struct {
 	char *s;
-	int lexical;
+	int lex;
 } rsvd[] = {
 	{"sizeof",	LSIZEOF},
 	{"void",	LVOID},
@@ -59,7 +60,7 @@ void lexinit(void)
 			symb[j] = rsvd[i].s[j];
 		symb[j] = 0;
 		s = lookup();
-		s->lexical = rsvd[i].lexical;
+		s->lex = rsvd[i].lex;
 	}
 }
 
@@ -83,7 +84,7 @@ Sym *lookup(void)
 	s->name = estrdup(symb);
 	s->next = hash[h];
 	hash[h] = s;
-	s->lexical = LID;
+	s->lex = LID;
 	return s;
 }
 
@@ -245,7 +246,13 @@ LEXID:
 	peek = c;
 	*cp = 0;
 	yylval.sym = lookup();
-	return yylval.sym->lexical;
+	if(yylval.sym->lex == LTYPEDEF)
+		tdef++;
+	else if(tdef > 0 && yylval.sym->lex == LID) {
+		yylval.sym->lex = LTYPE;
+		tdef--;
+	}
+	return yylval.sym->lex;
 }
 
 void compile(void)

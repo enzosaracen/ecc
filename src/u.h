@@ -15,10 +15,57 @@ typedef struct Src {
 
 typedef struct Sym Sym;
 struct Sym {
-	int		lexical;
+	int		lex;
 	char		*name;
 	Sym		*next;
 	unsigned	block;	
+};
+
+enum {
+	OPE = 256,
+	OME,
+	OMLE,
+	ODVE,
+	OMDE,
+	OLSHE,
+	ORSHE,
+	OANDE,
+	OXORE,
+	OORE,
+	OOROR,
+	OANDAND,
+	OEQ,
+	ONE,
+	OLE,
+	OGE
+	OLSH,
+	ORSH,
+	OARROW,
+	OPP,
+	OMM,
+	OAND,
+	OADDR,
+	OSIZEOF,
+	OIF,
+	OWHILE,
+	ODOWHILE,
+	OFOR,
+	OLIST,
+	OADD,
+	OSUB,
+	OPOS,
+	ONEG,
+	OBREAK,
+	OCONTINUE,
+	ORETURN,
+	OSWITCH,
+};
+
+typedef struct Node Node;
+struct Node {
+	int	op;
+	Node	*l;
+	Node	*r;
 };
 
 /* 
