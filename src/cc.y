@@ -116,7 +116,7 @@ decor:
 
 ptr:
    	'*'	
-|	'*' ptr		{printf("here??\n");}
+|	'*' ptr
 |	'*' qlist
 |	'*' qlist ptr
 
