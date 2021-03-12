@@ -5,6 +5,9 @@
 	 Sym *sym;
 }
 
+%type	prog xdecl fndef decl dlist dspec init ilist sue subody sudecl sudecor sudecorlist sqlist enumbody enumlist decor ptr ddecor parms pdecl
+%type	idlist adecor dadecor tname stmt label block slist sel iter jmp exprlist expr cast uexpr pexpr oexpr oelist qlist qual scspec tspec
+
 %token	LPE LME LMLE LDVE LMDE LLSHE LRSHE LANDE LXORE LORE LOROR LANDAND LEQ LNE LLE LGE LLSH LRSH LARROW LPP LMM LSIZEOF
 %token	LVOID LCHAR LSHORT LINT LLONG LFLOAT LDOUBLE LSIGNED LUNSIGNED LUNION LSTRUCT LENUM LTYPE LID LSTRING LNUM LELLIPSES
 %token	LIF LELSE LSWITCH LCASE LDEFAULT LWHILE LDO LFOR LGOTO LCONTINUE LBREAK LRETURN LAUTO LREGISTER LEXTERN LSTATIC LTYPEDEF LCONST LVOLATILE
@@ -37,11 +40,12 @@ fndef:
 |	dspec decor dlist block
 
 decl:
-	dspec dlist ';'
+	dspec ';'
+|	dspec dlist ';'
 
 dlist:
-	decl
-|	decl '=' init
+	decor
+|	decor '=' init
 |	dlist ',' dlist
 
 dspec:
@@ -55,11 +59,11 @@ dspec:
 init:
 	expr
 |	'{' ilist '}'
+|	'{' ilist ',' '}'
 
 ilist:
 	init
-|	init ','
-|	ilist ',' init
+|	ilist ',' ilist
 
 
 sue:
@@ -74,7 +78,11 @@ sue:
 |	LENUM enumbody
 
 subody:
-	'{' sudecl '}'
+	'{' sudecllist '}'
+
+sudecllist:
+	sudecl
+|	sudecllist sudecl
 
 sudecl:
 	sqlist sudecorlist ';'
@@ -85,7 +93,7 @@ sudecor:
 
 sudecorlist:
 |	sudecor
-|	sudecorlist sudecor
+|	sudecorlist ',' sudecor
 
 sqlist:
       	tspec
@@ -107,8 +115,8 @@ decor:
 |	ptr ddecor
 
 ptr:
-   	'*'
-|	'*' ptr
+   	'*'	
+|	'*' ptr		{printf("here??\n");}
 |	'*' qlist
 |	'*' qlist ptr
 

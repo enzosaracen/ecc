@@ -1,4 +1,3 @@
-# todo - clean this up
 CC 	= gcc
 CFLAGS	= -Wall -Wextra -g
 OBJ	= src/lex.o \

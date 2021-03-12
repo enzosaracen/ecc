@@ -123,7 +123,7 @@ int yylex(void)
 	for(; isspace(c); c = next());
 	if(isdigit(c)) 
 		goto LEXNUM;
-	if(isalpha(c)) {
+	if(isalpha(c) || c == '_') {
 		cp = symb;
 		goto LEXID;
 	}
@@ -226,9 +226,9 @@ int yylex(void)
 		break;
 	default:
 		return c;
+	}
 	peek = c2;
 	return c; 
-	}
 LEXNUM:
 	i = 0;
 	while(isdigit(c)) {
