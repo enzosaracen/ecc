@@ -66,12 +66,30 @@ dlist:
 |	dlist ',' dlist
 
 dspec:
-	scspec		{ spec($1); }
-|	scspec dspec	{ spec($1); }
-|	tspec		{ spec($1); }
-|	tspec dspec	{ spec($1); }
-|	qual		{ spec($1); }
-|	qual dspec	{ spec($1); }
+	scspec
+	{
+		spec($1);
+	}
+|	scspec dspec
+	{
+		spec($1);
+	}
+|	tspec
+	{
+		spec($1);
+	}
+|	tspec dspec
+	{
+		spec($1);
+	}
+|	qual
+	{
+		spec($1);
+	}
+|	qual dspec
+	{
+		spec($1);
+	}
 
 init:
 	expr
@@ -129,12 +147,21 @@ enumlist:
 
 decor:
      	ddecor
-|	'*' qlist ddecor	{ $$ = new(OIND, $3, NULL); }
+|	'*' qlist ddecor
+	{
+		$$ = new(OIND, $3, NULL);
+	}
 
 ddecor:
       	LID
-|	'(' decor ')'		{ $$ = $2; }
-|	ddecor '[' oexpr ']'	{ $$ = new(OARRAY, $1, $3); }
+|	'(' decor ')'
+	{
+		$$ = $2;
+	}
+|	ddecor '[' oexpr ']'
+	{
+		$$ = new(OARRAY, $1, $3);
+	}
 |	ddecor '(' parms ')'
 |	ddecor '(' idlist ')'
 |	ddecor '(' ')'
@@ -191,78 +218,241 @@ slist:
 |	slist stmt
 
 sel:
-	LIF '(' expr ')' stmt				{ $$ = new(OIF, $3, $5); }
-|	LIF '(' expr ')' stmt LELSE stmt		{ $$ = new(OIF, $3, new(OLIST, $5, $7)); }
-|	LSWITCH '(' expr ')' stmt			{ $$ = new(OSWITCH, $3, $5); }
+	LIF '(' expr ')' stmt
+	{
+		$$ = new(OIF, $3, $5);
+	}
+|	LIF '(' expr ')' stmt LELSE stmt
+	{
+		$$ = new(OIF, $3, new(OLIST, $5, $7));
+	}
+|	LSWITCH '(' expr ')' stmt
+	{
+		$$ = new(OSWITCH, $3, $5);
+	}
 
 iter:
-	LWHILE '(' expr ')' stmt			{ $$ = new(OWHILE, $3, $5); }
-|	LDO stmt LWHILE '(' expr ')' ';'		{ $$ = new(ODOWHILE, $2, $5); }
-|	LFOR '(' oexpr ';' oexpr ';' oexpr ')' stmt	{ $$ = new(OFOR, $3, new(OLIST, $5, new(OLIST, $7, $9))); }
+	LWHILE '(' expr ')' stmt
+	{
+		$$ = new(OWHILE, $3, $5);
+	}
+|	LDO stmt LWHILE '(' expr ')' ';'
+	{
+		$$ = new(ODOWHILE, $2, $5);
+	}
+|	LFOR '(' oexpr ';' oexpr ';' oexpr ')' stmt
+	{
+		$$ = new(OFOR, $3, new(OLIST, $5, new(OLIST, $7, $9)));
+	}
 
 jmp:
-	LGOTO LID ';'					{ $$ = new(OGOTO, NULL, NULL); $$->sym = $2; }
-|	LCONTINUE ';'					{ $$ = new(OCONTINUE, NULL, NULL); }
-|	LBREAK ';'					{ $$ = new(OBREAK, NULL, NULL); }
-|	LRETURN oexpr ';'				{ $$ = new(ORETURN, $2, NULL); }
+	LGOTO LID ';'
+	{
+		$$ = new(OGOTO, NULL, NULL);
+		$$->sym = $2;
+	}
+|	LCONTINUE ';'
+	{
+		$$ = new(OCONTINUE, NULL, NULL);
+	}
+|	LBREAK ';'
+	{
+		$$ = new(OBREAK, NULL, NULL);
+	}
+|	LRETURN oexpr ';'
+	{
+		$$ = new(ORETURN, $2, NULL);
+	}
 
 exprlist:
 	expr
-|	exprlist ',' exprlist				{ $$ = new(OLIST, $1, $3); }
+|	exprlist ',' exprlist
+	{
+		$$ = new(OLIST, $1, $3);
+	}
 
 expr:
     	uexpr
-|	expr '*' expr					{ $$ = new(OMUL, $1, $3); }
-|	expr '/' expr					{ $$ = new(ODIV, $1, $3); }
-|	expr '%' expr					{ $$ = new(OMOD, $1, $3); }
-|	expr '+' expr					{ $$ = new(OSUB, $1, $3); }
-|	expr '-' expr					{ $$ = new(OADD, $1, $3); }
-|	expr LLSH expr					{ $$ = new(OLSH, $1, $3); }
-|	expr LRSH expr					{ $$ = new(ORSH, $1, $3); }
-|	expr '<' expr					{ $$ = new(OLT, $1, $3); }
-|	expr LLE expr					{ $$ = new(OLE, $1, $3); }
-|	expr '>' expr					{ $$ = new(OGT, $1, $3); }
-|	expr LGE expr					{ $$ = new(OGE, $1, $3); }
-|	expr LEQ expr					{ $$ = new(OEQ, $1, $3); }
-|	expr LNE expr					{ $$ = new(ONE, $1, $3); }
-|	expr '&' expr					{ $$ = new(OAND, $1, $3); }
-|	expr '^' expr					{ $$ = new(OXOR, $1, $3); }
-|	expr '|' expr					{ $$ = new(OOR, $1, $3); }
-|	expr LANDAND expr				{ $$ = new(OANDAND, $1, $3); }
-|	expr LOROR expr					{ $$ = new(OOROR, $1, $3); }
-|	expr '=' expr					{ $$ = new(OAS, $1, $3); }
-|	expr LADDAS expr				{ $$ = new(OADDAS, $1, $3); }
-|	expr LSUBAS expr				{ $$ = new(OSUBAS, $1, $3); }
-|	expr LMULAS expr				{ $$ = new(OMULAS, $1, $3); }
-|	expr LDIVAS expr				{ $$ = new(ODIVAS, $1, $3); }
-|	expr LMODAS expr				{ $$ = new(OMODAS, $1, $3); }
-|	expr LLSHAS expr				{ $$ = new(OLSHAS, $1, $3); }
-|	expr LRSHAS expr				{ $$ = new(ORSHAS, $1, $3); }
-|	expr LANDAS expr				{ $$ = new(OANDAS, $1, $3); }
-|	expr LXORAS expr				{ $$ = new(OXORAS, $1, $3); }
-|	expr LORAS expr					{ $$ = new(OORAS, $1, $3); }
-|	expr '?' expr ':' expr				{ $$ = new(OCOND, $1, new(OLIST, $3, $5)); }
+|	expr '*' expr
+	{
+		$$ = new(OMUL, $1, $3);
+	}
+|	expr '/' expr
+	{
+		$$ = new(ODIV, $1, $3);
+	}
+|	expr '%' expr
+	{
+		$$ = new(OMOD, $1, $3);
+	}
+|	expr '+' expr
+	{
+		$$ = new(OSUB, $1, $3);
+	}
+|	expr '-' expr
+	{
+		$$ = new(OADD, $1, $3);
+	}
+|	expr LLSH expr
+	{
+		$$ = new(OLSH, $1, $3);
+	}
+|	expr LRSH expr
+	{
+		$$ = new(ORSH, $1, $3);
+	}
+|	expr '<' expr
+	{
+		$$ = new(OLT, $1, $3);
+	}
+|	expr LLE expr
+	{
+		$$ = new(OLE, $1, $3);
+	}
+|	expr '>' expr
+	{
+		$$ = new(OGT, $1, $3);
+	}
+|	expr LGE expr
+	{
+		$$ = new(OGE, $1, $3);
+	}
+|	expr LEQ expr
+	{
+		$$ = new(OEQ, $1, $3);
+	}
+|	expr LNE expr
+	{
+		$$ = new(ONE, $1, $3);
+	}
+|	expr '&' expr
+	{
+		$$ = new(OAND, $1, $3);
+	}
+|	expr '^' expr
+	{
+		$$ = new(OXOR, $1, $3);
+	}
+|	expr '|' expr
+	{
+		$$ = new(OOR, $1, $3);
+	}
+|	expr LANDAND expr
+	{
+		$$ = new(OANDAND, $1, $3);
+	}
+|	expr LOROR expr
+	{
+		$$ = new(OOROR, $1, $3);
+	}
+|	expr '=' expr
+	{
+		$$ = new(OAS, $1, $3);
+	}
+|	expr LADDAS expr
+	{
+		$$ = new(OADDAS, $1, $3);
+	}
+|	expr LSUBAS expr
+	{
+		$$ = new(OSUBAS, $1, $3);
+	}
+|	expr LMULAS expr
+	{
+		$$ = new(OMULAS, $1, $3);
+	}
+|	expr LDIVAS expr
+	{
+		$$ = new(ODIVAS, $1, $3);
+	}
+|	expr LMODAS expr
+	{
+		$$ = new(OMODAS, $1, $3);
+	}
+|	expr LLSHAS expr
+	{
+		$$ = new(OLSHAS, $1, $3);
+	}
+|	expr LRSHAS expr
+	{
+		$$ = new(ORSHAS, $1, $3);
+	}
+|	expr LANDAS expr
+	{
+		$$ = new(OANDAS, $1, $3);
+	}
+|	expr LXORAS expr
+	{
+		$$ = new(OXORAS, $1, $3);
+	}
+|	expr LORAS expr
+	{
+		$$ = new(OORAS, $1, $3);
+	}
+|	expr '?' expr ':' expr
+	{
+		$$ = new(OCOND, $1, new(OLIST, $3, $5));
+	}
 
 cast:
 	uexpr
-|	'(' tname ')' cast				{ $$ = new(OCAST, $2, $4); }
+|	'(' tname ')' cast
+	{
+		$$ = new(OCAST, $2, $4);
+	}
 
 uexpr:
 	pexpr
-|	LINC uexpr					{ $$ = new(OPREINC, $2, NULL); }
-|	LDEC uexpr					{ $$ = new(OPREDEC, $2, NULL); }
-|	'&' cast					{ $$ = new(OADDR, $2, NULL); }
-|	'*' cast					{ $$ = new(OIND, $2, NULL); }
-|	'+' cast					{ $$ = new(OPOS, $2, NULL); }
-|	'-' cast					{ $$ = new(ONEG, $2, NULL); }
-|	'~' cast					{ $$ = new(OBNOT, $2, NULL); }
-|	'!' cast					{ $$ = new(ONOT, $2, NULL); }
-|	LSIZEOF uexpr					{ $$ = new(OSIZEOF, $2, NULL); }
-|	LSIZEOF '(' tname ')'				{ $$ = new(OSIZEOF, $3, NULL); }
+|	LINC uexpr
+	{
+		$$ = new(OPREINC, $2, NULL);
+	}
+|	LDEC uexpr
+	{
+		$$ = new(OPREDEC, $2, NULL);
+	}
+|	'&' cast
+	{
+		$$ = new(OADDR, $2, NULL);
+	}
+|	'*' cast
+	{
+		$$ = new(OIND, $2, NULL);
+	}
+|	'+' cast
+	{
+		$$ = new(OPOS, $2, NULL);
+	}
+|	'-' cast
+	{
+		$$ = new(ONEG, $2, NULL);
+	}
+|	'~' cast
+	{
+		$$ = new(OBNOT, $2, NULL);
+	}
+|	'!' cast
+	{
+		$$ = new(ONOT, $2, NULL);
+	}
+|	LSIZEOF uexpr
+	{
+		$$ = new(OSIZEOF, $2, NULL);
+	}
+|	LSIZEOF '(' tname ')'
+	{
+		$$ = new(OSIZEOF, $3, NULL);
+	}
 	
 pexpr:
-	'(' exprlist ')'				{ $$ = $2; }
-|	pexpr '[' expr ']'				{ $$ = new(OIND, new(OADD, $1, $3), NULL; }
+	'(' exprlist ')'
+	{
+		$$ = $2;
+	}
+|	pexpr '[' expr ']'
+	{
+		$$ = new(OIND, new(OADD, $1, $3), NULL);
+	}
 |	pexpr '(' oelist ')'
 |	pexpr '.' LID
 |	pexpr LARROW LID
@@ -272,7 +462,10 @@ pexpr:
 |	LNUM
 |	LSTRING
 
-oexpr:		{ $$ = NULL; }
+oexpr:
+     	{
+		$$ = NULL;
+	}
 |	expr
 
 oelist:
