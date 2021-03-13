@@ -32,7 +32,7 @@ void panic(char *fmt, ...)
 	exit(1);
 }
 
-void errorposf(char *fmt, ...)
+void errorf(char *fmt, ...)
 {
 	va_list l;
 

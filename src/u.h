@@ -22,43 +22,96 @@ struct Sym {
 };
 
 enum {
-	OPE = 256,
-	OME,
-	OMLE,
-	ODVE,
-	OMDE,
-	OLSHE,
-	ORSHE,
-	OANDE,
-	OXORE,
-	OORE,
-	OOROR,
-	OANDAND,
-	OEQ,
-	ONE,
-	OLE,
-	OGE
-	OLSH,
-	ORSH,
-	OARROW,
-	OPP,
-	OMM,
-	OAND,
-	OADDR,
-	OSIZEOF,
-	OIF,
-	OWHILE,
-	ODOWHILE,
-	OFOR,
-	OLIST,
+	TCHAR,
+	TUCHAR,
+	TSHORT,
+	TUSHORT,
+	TINT,
+	TUINT,
+	TLONG,
+	TULONG,
+	TLLONG,
+	TULLONG,
+	TFLOAT
+	TDOUBLE,
+	TLDOUBLE,
+	TARRAY,
+	TENUM,
+	TFUNC,
+	TPTR,
+	TSTRUCT,
+	TVOID,
+};
+
+enum {
+	CNONE,
+	CAUTO,
+	CEXTERN,
+	CREGISTER,
+	CSTATIC,
+	CTYPEDEF,
+};
+
+typedef struct Type Type;
+struct Type {
+	int t;
+	Type *sub;
+};
+
+enum {
 	OADD,
-	OSUB,
-	OPOS,
-	ONEG,
+	OADDAS,
+	OADDR,
+	OAND,
+	OANDAND,
+	OANDAS,
+	OARROW,
+	OAS,
+	OBNOT,
 	OBREAK,
+	OCAST,
+	OCOND,
 	OCONTINUE,
+	ODIV,
+	ODIVAS,
+	ODOWHILE,
+	OEQ,
+	OFOR,
+	OGE,
+	OGOTO,
+	OGT,
+	OIF,
+	OIND,
+	OLE,
+	OLIST,
+	OLSH,
+	OLSHAS,
+	OLT,
+	OMOD,
+	OMODAS,
+	OMUL,
+	OMULAS,
+	ONE,
+	ONEG,
+	ONOT,
+	OOR,
+	OORAS,
+	OOROR,
+	OPOS,
+	OPOSTDEC,
+	OPOSTINC,
+	OPREDEC,
+	OPREINC,
 	ORETURN,
+	ORSH,
+	ORSHAS,
+	OSIZEOF,
+	OSUB,
+	OSUBAS,
 	OSWITCH,
+	OWHILE,
+	OXOR,
+	OXORAS,
 };
 
 typedef struct Node Node;
@@ -66,6 +119,7 @@ struct Node {
 	int	op;
 	Node	*l;
 	Node	*r;
+	Sym	*sym;
 };
 
 /* 
@@ -74,7 +128,7 @@ struct Node {
 void *emalloc(int);
 char *estrdup(char*);
 void panic(char *, ...);
-void errorposf(char *, ...);
+void errorf(char *, ...);
 
 /*
  *	lex.c
@@ -84,9 +138,20 @@ Sym *lookup(void);
 int yylex(void);
 void compile(void);
 
-void yyerror(char *s);
+/*
+ * 	ast.c
+ */
+Node *new(int, Node *, Node *);
+
+/*
+ * 	type.c
+ */
+void spec(int);
+int bitstype(void)
 
 Src	src;
 FILE	*outfile;
 char	symb[NSYMB];
 Sym	*hash[NHASH];
+int	bits
+int	lasttype;

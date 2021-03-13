@@ -3,7 +3,6 @@
 
 #define NOPEEK -2
 
-int tdef;
 char peek;
 struct {
 	char b[BUFSIZ], *p;
@@ -112,6 +111,7 @@ char next(void)
 int yylex(void)
 {
 	int i;
+	long v;
 	int c;
 	char c2, *cp;
 
@@ -123,10 +123,10 @@ int yylex(void)
 
 	for(; isspace(c); c = next());
 	if(isdigit(c)) 
-		goto LEXNUM;
+		goto lexnum;
 	if(isalpha(c) || c == '_') {
 		cp = symb;
-		goto LEXID;
+		goto lexid;
 	}
 	switch(c) {
 	case EOF:
@@ -134,33 +134,33 @@ int yylex(void)
 	case '+':
 		c2 = next();
 		if(c2 == '=')
-			return LPE;
+			return LADDAS;
 		else if(c2 == '+')
-			return LPP;
+			return LINC;
 		break;
 	case '-':
 		c2 = next();
 		if(c2 == '=')
-			return LME;
+			return LSUBAS;
 		else if(c2 == '-')
-			return LMM;
+			return LDEC;
 		else if(c2 == '>')
 			return LARROW;
 		break;
 	case '*':
 		c2 = next();
 		if(c2 == '=')
-			return LMLE;
+			return LMULAS;
 		break;
 	case '/':
 		c2 = next();
 		if(c2 == '=')
-			return LDVE;
+			return LDIVAS;
 		break;
 	case '%':
 		c2 = next();
 		if(c2 == '=')
-			return LMDE;
+			return LMODAS;
 		break;
 	case '>':
 		c2 = next();
@@ -169,7 +169,7 @@ int yylex(void)
 		else if(c2 == '>') {
 			c2 = next();
 			if(c2 == '=')
-				return LRSHE;
+				return LRSHAS;
 			c = LRSH;
 		}
 		break;
@@ -180,7 +180,7 @@ int yylex(void)
 		else if(c2 == '<') {
 			c2 = next();
 			if(c2 == '=')
-				return LLSHE;
+				return LLSHAS;
 			c = LLSH;
 		}
 		break;
@@ -199,25 +199,25 @@ int yylex(void)
 		if(c2 == '&')
 			return LANDAND;
 		else if(c2 == '=')
-			return LANDE;
+			return LANDAS;
 		break;
 	case '|':
 		c2 = next();
 		if(c2 == '|')
 			return LOROR;
 		else if(c2 == '=')
-			return LORE;
+			return LORAS;
 		break;
 	case '^':
 		c2 = next();
 		if(c2 == '=')
-			return LXORE;
+			return LXORAS;
 		break;
 	case '.':
 		c2 = next();
 		if(c2 == '.') {
 			if(next() != '.')
-				errorposf("expected '...'");
+				errorf("expected '...'");
 			return LELLIPSES;
 		}
 		break;
@@ -230,15 +230,16 @@ int yylex(void)
 	}
 	peek = c2;
 	return c; 
-LEXNUM:
-	i = 0;
+lexnum:
+	v = 0;
 	while(isdigit(c)) {
-		i = i*10 + c-'0';
+		v = v*10 + c-'0';
 		c = next();
 	}
 	peek = c;
+	yylval.lval = v;
 	return LNUM;
-LEXID:
+lexid:
 	while(isalnum(c) || c == '_') {
 		*cp++ = c;
 		c = next();
@@ -246,12 +247,6 @@ LEXID:
 	peek = c;
 	*cp = 0;
 	yylval.sym = lookup();
-	if(yylval.sym->lex == LTYPEDEF)
-		tdef++;
-	else if(tdef > 0 && yylval.sym->lex == LID) {
-		yylval.sym->lex = LTYPE;
-		tdef--;
-	}
 	return yylval.sym->lex;
 }
 

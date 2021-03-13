@@ -3,6 +3,7 @@ CFLAGS	= -Wall -Wextra -g
 OBJ	= src/lex.o \
 	  src/util.o \
 	  src/ast.o \
+	  src/type.o \
 	  src/main.o
 
 HFILES	= src/u.h \
@@ -23,4 +24,4 @@ src/y.tab.h src/cc.o:	src/cc.y src/u.h
 .PHONY:	clean
 
 clean:
-	rm -f ecc $(OBJ) src/cc.o
+	rm -f ecc $(OBJ) src/cc.o src/y.tab.c
