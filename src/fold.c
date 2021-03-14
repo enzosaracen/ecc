@@ -30,7 +30,6 @@ Node *fold(Node *n)
 	case OEQ:
 	case ONE:
 		goto binop;
-	case OCONST:
 	default:
 		return n;
 	}
