@@ -32,7 +32,7 @@ enum {
 	TULONG,
 	TLLONG,
 	TULLONG,
-	TFLOAT
+	TFLOAT,
 	TDOUBLE,
 	TLDOUBLE,
 	TARRAY,
@@ -54,8 +54,10 @@ enum {
 
 typedef struct Type Type;
 struct Type {
-	int t;
-	Type *sub;
+	int	ttype;
+	int	width;
+	Sym	*sym;
+	Type	*sub;
 };
 
 enum {
@@ -65,21 +67,27 @@ enum {
 	OAND,
 	OANDAND,
 	OANDAS,
+	OARRAY,
 	OARROW,
 	OAS,
 	OBNOT,
 	OBREAK,
 	OCAST,
+	OCASE,
 	OCOND,
+	OCONST,
 	OCONTINUE,
 	ODIV,
 	ODIVAS,
+	ODOT,
 	ODOWHILE,
 	OEQ,
 	OFOR,
+	OFUNC,
 	OGE,
 	OGOTO,
 	OGT,
+	OID,
 	OIF,
 	OIND,
 	OLE,
@@ -106,6 +114,7 @@ enum {
 	ORSH,
 	ORSHAS,
 	OSIZEOF,
+	OSTRING,
 	OSUB,
 	OSUBAS,
 	OSWITCH,
@@ -120,6 +129,23 @@ struct Node {
 	Node	*l;
 	Node	*r;
 	Sym	*sym;
+	Type	*t;
+	long	lval;
+	char	*sval;
+};
+
+enum {
+	BVOID		= 1<<0,
+	BCHAR		= 1<<1,
+	BSHORT		= 1<<2,
+	BINT		= 1<<3,
+	BLONG		= 1<<4,
+	BFLOAT		= 1<<5,
+	BDOUBLE		= 1<<6,
+	BSIGNED		= 1<<7,
+	BUNSIGNED	= 1<<8,
+	BSTRUCT		= 1<<9,
+	BENUM		= 1<<10,
 };
 
 /* 
@@ -129,6 +155,7 @@ void *emalloc(int);
 char *estrdup(char*);
 void panic(char *, ...);
 void errorf(char *, ...);
+void warnf(char *, ...);
 
 /*
  *	lex.c
@@ -142,16 +169,22 @@ void compile(void);
  * 	ast.c
  */
 Node *new(int, Node *, Node *);
+void freenode(Node *);
 
 /*
- * 	type.c
+ * 	decl.c
  */
 void spec(int);
-int bitstype(void)
+int getspec(void);
+
+/*
+ *	fold.c
+ */
+Node *fold(Node *);
 
 Src	src;
 FILE	*outfile;
 char	symb[NSYMB];
 Sym	*hash[NHASH];
-int	bits
-int	lasttype;
+int	bits;
+int	class;

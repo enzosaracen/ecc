@@ -6,7 +6,7 @@ void *emalloc(int n)
 
 	v = malloc(n);
 	if(v == NULL)
-		panic("malloc failed");
+		panic("out of memory");
 	return v;
 }
 
@@ -23,23 +23,39 @@ char *estrdup(char *s)
 
 void panic(char *fmt, ...)
 {
-	va_list l;
+	va_list arg;
 	
-	va_start(l, fmt);
-	vfprintf(stderr, fmt, l);
-	va_end(l);
+	va_start(arg, fmt);
+	vfprintf(stderr, fmt, arg);
+	va_end(arg);
 	fprintf(stderr, "\n");
 	exit(1);
 }
 
 void errorf(char *fmt, ...)
 {
-	va_list l;
+	va_list arg;
 
-	fprintf(stderr, "%s:%d:%d: ", src.name, src.line, src.col);
-	va_start(l, fmt);
-	vfprintf(stderr, fmt, l);
-	va_end(l);
+	fprintf(stderr, "%s:%d:%d: error: ", src.name, src.line, src.col);
+	va_start(arg, fmt);
+	vfprintf(stderr, fmt, arg);
+	va_end(arg);
 	fprintf(stderr, "\n");
 	exit(1);
+}
+
+void warnf(char *fmt, ...)
+{
+	va_list arg;
+
+	fprintf(stderr, "%s:%d:%d: warning: ", src.name, src.line, src.col);
+	va_start(arg, fmt);
+	vfprintf(stderr, fmt, arg);
+	va_end(arg);
+	fprintf(stderr, "\n");
+}
+
+void yyerror(char *s)
+{
+	errorf("%s near %s", s, symb);
 }

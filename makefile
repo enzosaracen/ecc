@@ -3,7 +3,8 @@ CFLAGS	= -Wall -Wextra -g
 OBJ	= src/lex.o \
 	  src/util.o \
 	  src/ast.o \
-	  src/type.o \
+	  src/decl.o \
+	  src/fold.o \
 	  src/main.o
 
 HFILES	= src/u.h \

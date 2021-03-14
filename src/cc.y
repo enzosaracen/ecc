@@ -10,7 +10,7 @@
 	 long	lval;
 }
 
-%type	<node>	xdecl fndef decl dlist dspec init ilist sue subody sudecl sudecor sudecorlist sqlist enumbody enumlist decor ptr ddecor parms pdecl
+%type	<node>	xdecl fndef dlist dspec init ilist sue subody sudecl sudecor sudecorlist sqlist enumbody enumlist decor ptr ddecor parms pdecl
 %type	<node>	idlist adecor dadecor tname stmt label block slist sel iter jmp exprlist expr cast uexpr pexpr oexpr oelist qlist qual scspec tspec
 
 %token	<sym>	LID LTYPE
@@ -49,21 +49,26 @@ fndef:
 |	dspec decor dlist block
 
 decl:
-	dspec ';'	
-|	dspec
+	dspec ';'
 	{
-		lasttype = bitstype();
-		bits = 0;
+		warnf("empty declaration useless");
 	}
-	dlist ';'
+|	dspec dlist ';'
 	{
-		
+		decl($2);
+		bits = 0;
 	}
 
 dlist:
 	decor
 |	decor '=' init
+	{
+		$$ = new(OAS, $1, $3);
+	}
 |	dlist ',' dlist
+	{
+		$$ = new(OLIST, $1, $3);
+	}
 
 dspec:
 	scspec
@@ -94,11 +99,20 @@ dspec:
 init:
 	expr
 |	'{' ilist '}'
+	{
+		$$ = $2;
+	}
 |	'{' ilist ',' '}'
+	{
+		$$ = $2;
+	}
 
 ilist:
 	init
 |	ilist ',' ilist
+	{
+		$$ = new(OLIST, $1, $3);
+	}
 
 
 sue:
@@ -163,12 +177,20 @@ ddecor:
 		$$ = new(OARRAY, $1, $3);
 	}
 |	ddecor '(' parms ')'
-|	ddecor '(' idlist ')'
+	{
+		$$ = new(OFUNC, $1, $3);
+	}
 |	ddecor '(' ')'
 
 parms:
-     	pdecl
+     	{
+		$$ = NULL;
+	}
+|	pdecl
 |	parms ',' parms
+	{
+		$$ = new(OLIST, $1, $3);
+	}
 |	parms ',' LELLIPSES
 
 pdecl:
@@ -454,13 +476,40 @@ pexpr:
 		$$ = new(OIND, new(OADD, $1, $3), NULL);
 	}
 |	pexpr '(' oelist ')'
+	{
+		$$ = new(OFUNC, $1, $3);
+	}
 |	pexpr '.' LID
+	{
+		$$ = new(ODOT, $1, $3);
+	}
 |	pexpr LARROW LID
+	{
+		$$ = new(OARROW, $1, $3);
+	}
 |	pexpr LINC
+	{
+		$$ = new(OPOSTINC, $1, NULL);
+	}
 |	pexpr LDEC
+	{
+		$$ = new(OPOSTDEC, $1, NULL);
+	}
 |	LID
+	{
+		$$ = new(OID, NULL, NULL);
+		$$->sym = $1;
+	}
 |	LNUM
+	{
+		$$ = new(OCONST, NULL, NULL);
+		$$->lval = $1;
+	}
 |	LSTRING
+	{
+		$$ = new(OSTRING, NULL, NULL);
+		$$->sval = $1;
+	}
 
 oexpr:
      	{
@@ -471,6 +520,9 @@ oexpr:
 oelist:
 	oexpr
 |	oelist ',' oelist
+	{
+		$$ = new(OLIST, $1, $3);
+	}
 
 qlist:
 |	qual
@@ -500,7 +552,3 @@ tspec:
 |	LTYPE
 |	sue
 %%
-void yyerror(char *s)
-{
-	errorf("%s", s);
-}

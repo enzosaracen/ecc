@@ -10,3 +10,12 @@ Node *new(int op, Node *l, Node *r)
 	n->r = r;
 	return n;
 }
+
+void freenode(Node *n)
+{
+	if(n->l != NULL)
+		freenode(n->l);
+	if(n->r != NULL)
+		freenode(n->r);
+	free(n);
+}

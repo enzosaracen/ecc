@@ -76,9 +76,13 @@ Sym *lookup(void)
 		h = ((h << 5) + h) + c;
 	h %= NHASH;
 
-	for(s = hash[h]; s; s = s->next)
+	c = symb[0];
+	for(s = hash[h]; s; s = s->next) {
+		if(s->name[0] != c)
+			continue;
 		if(strcmp(s->name, symb) == 0)
 			return s;
+	}
 	s = emalloc(sizeof(Sym));
 	s->name = estrdup(symb);
 	s->next = hash[h];
