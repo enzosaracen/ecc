@@ -8,17 +8,19 @@
 	 char	*sval;
 	 char	cval;
 	 long	lval;
+	 int	ival;
 }
 
-%type	<node>	xdecl fndef dlist dspec init ilist sue subody sudecl sudecor sudecorlist sqlist enumbody enumlist decor ptr ddecor parms pdecl
-%type	<node>	idlist adecor dadecor tname stmt label block slist sel iter jmp exprlist expr cast uexpr pexpr oexpr oelist qlist qual scspec tspec
+%type	<node>	xdecl fndef dlist dspec init ilist sue subody sudecl sudecor sudecorlist sqlist enumbody enumlist decor ddecor parms pdecl
+%type	<node>	idlist adecor dadecor tname stmt label block slist sel iter jmp exprlist expr cast uexpr pexpr oexpr oelist qlist id
+%type	<ival>	scspec tspec qual
 
 %token	<sym>	LID LTYPE
-%token	<lval>	LNUM
 %token	<sval>	LSTRING
 %token	<cval>	LCHARLIT
-%token	LADDAS LSUBAS LMULAS LDIVAS LMODAS LLSHAS LRSHAS LANDAS LXORAS LORAS LOROR LANDAND LEQ LNE LLE LGE LLSH LRSH LARROW LINC LDEC LSIZEOF
-%token	LVOID LCHAR LSHORT LINT LLONG LFLOAT LDOUBLE LSIGNED LUNSIGNED LUNION LSTRUCT LENUM LELLIPSES
+%token	<lval>	LNUM
+%token	LVOID LCHAR LSHORT LINT LLONG LFLOAT LDOUBLE LSIGNED LUNSIGNED LUNION LSTRUCT LENUM LNUM
+%token	LADDAS LSUBAS LMULAS LDIVAS LMODAS LLSHAS LRSHAS LANDAS LXORAS LORAS LOROR LANDAND LEQ LNE LLE LGE LLSH LRSH LARROW LINC LDEC LSIZEOF LELLIPSES
 %token	LIF LELSE LSWITCH LCASE LDEFAULT LWHILE LDO LFOR LGOTO LCONTINUE LBREAK LRETURN LAUTO LREGISTER LEXTERN LSTATIC LTYPEDEF LCONST LVOLATILE
 
 %left	','
@@ -55,8 +57,8 @@ decl:
 	}
 |	dspec dlist ';'
 	{
+		prtree($2, 0);
 		decl($2);
-		bits = 0;
 	}
 
 dlist:
@@ -114,18 +116,6 @@ ilist:
 		$$ = new(OLIST, $1, $3);
 	}
 
-
-sue:
-	LSTRUCT LID
-|	LSTRUCT	LID subody
-|	LSTRUCT	subody
-|	LUNION LID
-|	LUNION LID subody 
-|	LUNION subody
-|	LENUM LID
-|	LENUM LID enumbody
-|	LENUM enumbody
-
 subody:
 	'{' sudecllist '}'
 
@@ -154,8 +144,8 @@ enumbody:
 	'{' enumlist '}'
 
 enumlist:
-     	LID
-|	LID '=' expr
+     	id
+|	id '=' expr
 |	enumlist ',' enumlist
 |	enumlist ','
 
@@ -167,7 +157,7 @@ decor:
 	}
 
 ddecor:
-      	LID
+      	id
 |	'(' decor ')'
 	{
 		$$ = $2;
@@ -199,13 +189,16 @@ pdecl:
 |	dspec adecor
 
 idlist:
-	LID
+	id
 |	idlist ',' idlist
+	{
+		$$ = new(OLIST, $1, $3);
+	}
 
 adecor:
-	ptr
+	'*'
 |	dadecor
-|	ptr dadecor
+|	'*' dadecor
 
 dadecor:
        	'(' adecor ')'
@@ -228,7 +221,7 @@ stmt:
 |	jmp
 
 label:
-	LID ':' stmt
+	id ':' stmt
 |	LCASE expr ':' stmt
 |	LDEFAULT ':' stmt
 
@@ -268,10 +261,9 @@ iter:
 	}
 
 jmp:
-	LGOTO LID ';'
+	LGOTO id ';'
 	{
-		$$ = new(OGOTO, NULL, NULL);
-		$$->sym = $2;
+		$$ = new(OGOTO, $2, NULL);
 	}
 |	LCONTINUE ';'
 	{
@@ -479,11 +471,11 @@ pexpr:
 	{
 		$$ = new(OFUNC, $1, $3);
 	}
-|	pexpr '.' LID
+|	pexpr '.' id
 	{
 		$$ = new(ODOT, $1, $3);
 	}
-|	pexpr LARROW LID
+|	pexpr LARROW id
 	{
 		$$ = new(OARROW, $1, $3);
 	}
@@ -495,11 +487,7 @@ pexpr:
 	{
 		$$ = new(OPOSTDEC, $1, NULL);
 	}
-|	LID
-	{
-		$$ = new(OID, NULL, NULL);
-		$$->sym = $1;
-	}
+|	id
 |	LNUM
 	{
 		$$ = new(OCONST, NULL, NULL);
@@ -530,25 +518,91 @@ qlist:
 
 qual:
     	LCONST
+	{
+		$$ = BCONST;
+	}
 |	LVOLATILE
+	{
+		$$ = BVOLATILE;
+	}
 
 scspec:
       	LAUTO
+	{
+		$$ = BAUTO;
+	}
 |	LREGISTER
+	{
+		$$ = BREGISTER;
+	}
 |	LSTATIC
+	{
+		$$ = BSTATIC;
+	}
 |	LEXTERN
+	{
+		$$ = BEXTERN;
+	}
 |	LTYPEDEF
+	{
+		$$ = BTYPEDEF;
+	}
 
 tspec:
      	LVOID
+	{
+		$$ = BVOID;
+	}
 |	LCHAR
+	{
+		$$ = BCHAR;
+	}
 |	LSHORT
+	{
+		$$ = BSHORT;
+	}
 |	LINT
+	{
+		$$ = BINT;
+	}
 |	LLONG
+	{
+		$$ = BLONG;
+	}
 |	LFLOAT
+	{
+		$$ = BFLOAT;
+	}
 |	LDOUBLE
+	{
+		$$ = BDOUBLE;
+	}
 |	LSIGNED
+	{
+		$$ = BSIGNED;
+	}
 |	LUNSIGNED
+	{
+		$$ = BUNSIGNED;
+	}
 |	LTYPE
 |	sue
+
+sue:
+	LSTRUCT id
+|	LSTRUCT	id subody
+|	LSTRUCT	subody
+|	LUNION id
+|	LUNION id subody 
+|	LUNION subody
+|	LENUM id
+|	LENUM id enumbody
+|	LENUM enumbody
+
+id:
+	LID
+	{
+		$$ = new(OID, NULL, NULL);
+		$$->sym = $1;
+	}
 %%

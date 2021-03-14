@@ -7,18 +7,24 @@
 #define NHASH 1024
 #define NSYMB 1024
 
-typedef struct Src {
+typedef struct Src Src;
+typedef struct Sym Sym;
+typedef struct Type Type;
+typedef struct Node Node;
+
+struct Src {
 	FILE	*fp;
 	int	line, col;
 	char	*name;
-} Src;
+};
 
-typedef struct Sym Sym;
 struct Sym {
 	int		lex;
+	Type		*type;
 	char		*name;
 	Sym		*next;
-	unsigned	block;	
+	unsigned	block;
+	int		class;
 };
 
 enum {
@@ -52,11 +58,9 @@ enum {
 	CTYPEDEF,
 };
 
-typedef struct Type Type;
 struct Type {
 	int	ttype;
 	int	width;
-	Sym	*sym;
 	Type	*sub;
 };
 
@@ -123,7 +127,6 @@ enum {
 	OXORAS,
 };
 
-typedef struct Node Node;
 struct Node {
 	int	op;
 	Node	*l;
@@ -144,8 +147,13 @@ enum {
 	BDOUBLE		= 1<<6,
 	BSIGNED		= 1<<7,
 	BUNSIGNED	= 1<<8,
-	BSTRUCT		= 1<<9,
-	BENUM		= 1<<10,
+	BCONST		= 1<<9,
+	BVOLATILE	= 1<<10,
+	BAUTO		= 1<<11,
+	BEXTERN		= 1<<12,
+	BREGISTER	= 1<<13,
+	BSTATIC		= 1<<14,
+	BTYPEDEF	= 1<<15,
 };
 
 /* 
@@ -156,6 +164,7 @@ char *estrdup(char*);
 void panic(char *, ...);
 void errorf(char *, ...);
 void warnf(char *, ...);
+void yyerror(char *);
 
 /*
  *	lex.c
@@ -170,10 +179,12 @@ void compile(void);
  */
 Node *new(int, Node *, Node *);
 void freenode(Node *);
+void prtree(Node *, int);
 
 /*
  * 	decl.c
  */
+Type *decl(Node *);
 void spec(int);
 int getspec(void);
 

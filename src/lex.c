@@ -114,7 +114,6 @@ char next(void)
 
 int yylex(void)
 {
-	int i;
 	long v;
 	int c;
 	char c2, *cp;
