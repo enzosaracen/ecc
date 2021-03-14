@@ -6,8 +6,6 @@ Node *fold(Node *n)
 	long l, r;
 
 	switch(n->op) {
-	case OCONST:
-		return n;
 	case OPOS:
 	case ONEG:
 	case ONOT:
@@ -32,6 +30,7 @@ Node *fold(Node *n)
 	case OEQ:
 	case ONE:
 		goto binop;
+	case OCONST:
 	default:
 		return n;
 	}
