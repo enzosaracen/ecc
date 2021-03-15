@@ -83,7 +83,7 @@ char *op2str(int op)
 	case OWHILE:	return "while";
 	case OXOR:	return "^";
 	case OXORAS:	return "^=";
-	default:	panic("unrecognized op type while printing ast");
+	default:	panic("unrecognized op type %d while printing ast", op);
 	}
 }
 

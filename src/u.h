@@ -50,7 +50,7 @@ enum {
 };
 
 enum {
-	CNONE,
+	CNONE = 0,
 	CAUTO,
 	CEXTERN,
 	CREGISTER,
@@ -147,13 +147,11 @@ enum {
 	BDOUBLE		= 1<<6,
 	BSIGNED		= 1<<7,
 	BUNSIGNED	= 1<<8,
-	BCONST		= 1<<9,
-	BVOLATILE	= 1<<10,
-	BAUTO		= 1<<11,
-	BEXTERN		= 1<<12,
-	BREGISTER	= 1<<13,
-	BSTATIC		= 1<<14,
-	BTYPEDEF	= 1<<15,
+	BAUTO		= 1<<9,
+	BEXTERN		= 1<<10,
+	BREGISTER	= 1<<11,
+	BSTATIC		= 1<<12,
+	BTYPEDEF	= 1<<13,
 };
 
 /* 
@@ -199,3 +197,5 @@ char	symb[NSYMB];
 Sym	*hash[NHASH];
 int	bits;
 int	class;
+int	ttype;
+Type	*t;

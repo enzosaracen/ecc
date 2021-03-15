@@ -11,6 +11,7 @@ Type *type(int ttype, Type *sub)
 	return t;
 }
 
+/*
 Type *decl(Node *n)
 {
 	Type *t;
@@ -18,9 +19,6 @@ Type *decl(Node *n)
 
 	t = type(getspec(), NULL);
 	for(;;) {
-		printf("--------\n");
-		prtree(n, 0);
-		printf("--------\n");
 		switch(n->op) {
 		case OARRAY:
 			t = type(TARRAY, t);
@@ -31,9 +29,9 @@ Type *decl(Node *n)
 					errorf("array size must be constant");
 				else if(n2->lval < 0)
 					errorf("array size must be positive");
-				printf("lval: %ld\n", n2->lval);
 				t->width = n2->lval * t->sub->width;
 			}
+			n = n->l;
 			break;
 		case OIND:
 			t = type(TPTR, t);
@@ -46,82 +44,92 @@ Type *decl(Node *n)
 			goto end;
 		}
 	}
-end:
-	class = CNONE;
-	bits = 0;
 	return t;
-}
+}*/
 
-void spec(int btype)
+void spec(int b)
 {
-	switch(btype) {
-	case BCONST:
-	case BVOLATILE:
+	switch(b) {
+	case 0:
 		return;
 	case BAUTO:
-		btype = CAUTO;
-		goto isclass;
+		b = CAUTO;
+		goto class;
 	case BEXTERN:
-		btype = CEXTERN;
-		goto isclass;
+		b = CEXTERN;
+		goto class;
 	case BREGISTER:
-		btype = CREGISTER;
-		goto isclass;
+		b = CREGISTER;
+		goto class;
 	case BSTATIC:
-		btype = CSTATIC;
-		goto isclass;
+		b = CSTATIC;
+		goto class;
 	case BTYPEDEF:
-		btype = CTYPEDEF;
-		goto isclass;
+		b = CTYPEDEF;
+		goto class;
 	default:
-		if(bits & btype)
+		if(bits & b)
 			errorf("duplicate types");
-		bits |= btype;
+		bits |= b;
 		return;
 	}
-isclass:
+class:
 	if(class != CNONE)
 		errorf("multiple storage classes");
-	class = btype;
+	class = b;
 }
 
-int getspec(void)
+void getspec(void)
 {
 	switch(bits) {
 	case BVOID:
-		return TVOID;
+		ttype = TVOID;
+		goto end;
 	case BCHAR:
 	case BCHAR|BSIGNED:
-		return TCHAR;
+		ttype = TCHAR;
+		goto end;
 	case BCHAR|BUNSIGNED:
-		return TUCHAR;
+		ttype = TUCHAR;
+		goto end;
 	case BSHORT:
 	case BSHORT|BINT:
 	case BSHORT|BSIGNED:
 	case BSHORT|BINT|BSIGNED:
-		return TSHORT;
+		ttype = TSHORT;
+		goto end;
 	case BSHORT|BUNSIGNED:
 	case BSHORT|BUNSIGNED|BINT:
-		return TUSHORT;
+		ttype = TUSHORT;
+		goto end;
 	case 0:
 	case BINT:
 	case BSIGNED:
 	case BINT|BSIGNED:
-		return TINT;
+		ttype = TINT;
+		goto end;
 	case BUNSIGNED:
 	case BINT|BUNSIGNED:
-		return TUINT;
+		ttype = TUINT;
+		goto end;
 	case BLONG:
 	case BLONG|BINT:
 	case BLONG|BSIGNED:
 	case BLONG|BINT|BSIGNED:
-		return TLONG;
+		ttype = TLONG;
+		goto end;
 	case BFLOAT:
-		return TFLOAT;
+		ttype = TFLOAT;
+		goto end;
 	case BDOUBLE:
-		return TDOUBLE;
+		ttype = TDOUBLE;
+		goto end;
 	case BDOUBLE|BLONG:
-		return TLDOUBLE;
+		ttype = TLDOUBLE;
+		goto end;
+	default:
+		errorf("illegal combination of types");
 	}
-	errorf("illegal combination of types");
+end:
+	class = bits = 0;
 }

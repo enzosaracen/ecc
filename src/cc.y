@@ -8,20 +8,20 @@
 	 char	*sval;
 	 char	cval;
 	 long	lval;
-	 int	ival;
 }
 
-%type	<node>	xdecl fndef dlist dspec init ilist sue subody sudecl sudecor sudecorlist sqlist enumbody enumlist decor ddecor parms pdecl
-%type	<node>	idlist adecor dadecor tname stmt label block slist sel iter jmp exprlist expr cast uexpr pexpr oexpr oelist qlist id
-%type	<ival>	scspec tspec qual
+%type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel idlist parms 
+%type	<node>	stmt id ddecor decor ilist init dlist
+%type	<type>	tname
 
 %token	<sym>	LID LTYPE
 %token	<sval>	LSTRING
 %token	<cval>	LCHARLIT
 %token	<lval>	LNUM
-%token	LVOID LCHAR LSHORT LINT LLONG LFLOAT LDOUBLE LSIGNED LUNSIGNED LUNION LSTRUCT LENUM LNUM
-%token	LADDAS LSUBAS LMULAS LDIVAS LMODAS LLSHAS LRSHAS LANDAS LXORAS LORAS LOROR LANDAND LEQ LNE LLE LGE LLSH LRSH LARROW LINC LDEC LSIZEOF LELLIPSES
-%token	LIF LELSE LSWITCH LCASE LDEFAULT LWHILE LDO LFOR LGOTO LCONTINUE LBREAK LRETURN LAUTO LREGISTER LEXTERN LSTATIC LTYPEDEF LCONST LVOLATILE
+%token	LVOID LCHAR LSHORT LINT LLONG LFLOAT LDOUBLE LSIGNED LUNSIGNED LUNION LSTRUCT LENUM
+%token	LADDAS LSUBAS LMULAS LDIVAS LMODAS LLSHAS LRSHAS LANDAS LXORAS LORAS LOROR LANDAND
+%token	LEQ LNE LLE LGE LLSH LRSH LARROW LINC LDEC LSIZEOF LELLIPSES LIF LELSE LSWITCH LCASE LDEFAULT 
+%token	LWHILE LDO LFOR LGOTO LCONTINUE LBREAK LRETURN LAUTO LREGISTER LEXTERN LSTATIC LTYPEDEF LCONST LVOLATILE
 
 %left	','
 %right	'=' LADDAS LSUBAS LMULAS LDIVAS LMODAS LLSHE LRSHE LANDE LXORE LORE
@@ -53,13 +53,9 @@ fndef:
 decl:
 	dspec ';'
 	{
-		warnf("empty declaration useless");
+		warnf("empty declaration useless")
 	}
 |	dspec dlist ';'
-	{
-		prtree($2, 0);
-		decl($2);
-	}
 
 dlist:
 	decor
@@ -70,32 +66,6 @@ dlist:
 |	dlist ',' dlist
 	{
 		$$ = new(OLIST, $1, $3);
-	}
-
-dspec:
-	scspec
-	{
-		spec($1);
-	}
-|	scspec dspec
-	{
-		spec($1);
-	}
-|	tspec
-	{
-		spec($1);
-	}
-|	tspec dspec
-	{
-		spec($1);
-	}
-|	qual
-	{
-		spec($1);
-	}
-|	qual dspec
-	{
-		spec($1);
 	}
 
 init:
@@ -134,10 +104,18 @@ sudecorlist:
 |	sudecor
 |	sudecorlist ',' sudecor
 
+dspec:
+	scspec
+|	tspec
+|	qual
+|	scspec dspec
+|	tspec dspec
+|	qual dspec
+
 sqlist:
       	tspec
-|	tspec sqlist
 |	qual
+|	tspec sqlist
 |	qual sqlist
 
 enumbody:
@@ -153,22 +131,35 @@ decor:
      	ddecor
 |	'*' qlist ddecor
 	{
-		$$ = new(OIND, $3, NULL);
+		t = type(TPTR, t);
+		t->width = 8;
 	}
 
 ddecor:
       	id
-|	'(' decor ')'
 	{
-		$$ = $2;
+		$1->sym = t;
+		$1->class = class;
 	}
+|	'(' decor ')'
 |	ddecor '[' oexpr ']'
 	{
-		$$ = new(OARRAY, $1, $3);
+		Node *n;
+
+		t = type(TARRAY, t);
+		t->width = 0;
+		if($3 != NULL) {
+			n = fold($3);
+			if(n->op != OCONST)
+				errorf("array size must be constant");
+			else if(n->lval < 0)
+				errorf("array size must be positive");
+			t->width = n->lval * t->sub->width;
+		}
 	}
 |	ddecor '(' parms ')'
 	{
-		$$ = new(OFUNC, $1, $3);
+		
 	}
 |	ddecor '(' ')'
 
@@ -201,17 +192,23 @@ adecor:
 |	'*' dadecor
 
 dadecor:
-       	'(' adecor ')'
+	'(' ')'
+|	'(' adecor ')'
 |	'[' oexpr ']'
-|	dadecor '[' oexpr ']'
-|	'(' ')'
 |	'(' parms ')'
+|	dadecor '[' oexpr ']'
 |	dadecor '(' ')'
 |	dadecor '(' parms ')'
 
 tname:
-	sqlist 
+	sqlist
+	{
+		$$ = type(ttype, NULL);
+	}
 |	sqlist adecor
+	{
+		$$ = $2;
+	}
 
 stmt:
 	label
@@ -301,11 +298,11 @@ expr:
 	}
 |	expr '+' expr
 	{
-		$$ = new(OSUB, $1, $3);
+		$$ = new(OADD, $1, $3);
 	}
 |	expr '-' expr
 	{
-		$$ = new(OADD, $1, $3);
+		$$ = new(OSUB, $1, $3);
 	}
 |	expr LLSH expr
 	{
@@ -351,7 +348,7 @@ expr:
 	{
 		$$ = new(OOR, $1, $3);
 	}
-|	expr LANDAND expr
+|	expr LANDAND exp
 	{
 		$$ = new(OANDAND, $1, $3);
 	}
@@ -363,39 +360,39 @@ expr:
 	{
 		$$ = new(OAS, $1, $3);
 	}
-|	expr LADDAS expr
+|	expr LADDAS exp
 	{
 		$$ = new(OADDAS, $1, $3);
 	}
-|	expr LSUBAS expr
+|	expr LSUBAS exp
 	{
 		$$ = new(OSUBAS, $1, $3);
 	}
-|	expr LMULAS expr
+|	expr LMULAS exp
 	{
 		$$ = new(OMULAS, $1, $3);
 	}
-|	expr LDIVAS expr
+|	expr LDIVAS exp
 	{
 		$$ = new(ODIVAS, $1, $3);
 	}
-|	expr LMODAS expr
+|	expr LMODAS exp
 	{
 		$$ = new(OMODAS, $1, $3);
 	}
-|	expr LLSHAS expr
+|	expr LLSHAS exp
 	{
 		$$ = new(OLSHAS, $1, $3);
 	}
-|	expr LRSHAS expr
+|	expr LRSHAS exp
 	{
 		$$ = new(ORSHAS, $1, $3);
 	}
-|	expr LANDAS expr
+|	expr LANDAS exp
 	{
 		$$ = new(OANDAS, $1, $3);
 	}
-|	expr LXORAS expr
+|	expr LXORAS exp
 	{
 		$$ = new(OXORAS, $1, $3);
 	}
@@ -493,14 +490,14 @@ pexpr:
 		$$ = new(OCONST, NULL, NULL);
 		$$->lval = $1;
 	}
-|	LSTRING
+|	LSTRING	
 	{
 		$$ = new(OSTRING, NULL, NULL);
 		$$->sval = $1;
 	}
 
 oexpr:
-     	{
+	{
 		$$ = NULL;
 	}
 |	expr
@@ -518,72 +515,66 @@ qlist:
 
 qual:
     	LCONST
-	{
-		$$ = BCONST;
-	}
 |	LVOLATILE
-	{
-		$$ = BVOLATILE;
-	}
 
 scspec:
       	LAUTO
 	{
-		$$ = BAUTO;
+		spec(BAUTO);
 	}
 |	LREGISTER
 	{
-		$$ = BREGISTER;
+		spec(BREGISTER);
 	}
 |	LSTATIC
 	{
-		$$ = BSTATIC;
+		spec(BSTATIC);
 	}
 |	LEXTERN
 	{
-		$$ = BEXTERN;
+		spec(BEXTERN);
 	}
 |	LTYPEDEF
 	{
-		$$ = BTYPEDEF;
+		spec(BTYPEDEF);
 	}
 
 tspec:
      	LVOID
 	{
-		$$ = BVOID;
+		spec(BVOID);
 	}
 |	LCHAR
 	{
-		$$ = BCHAR;
+		spec(BCHAR);
 	}
 |	LSHORT
 	{
-		$$ = BSHORT;
+		spec(BSHORT);
 	}
 |	LINT
 	{
-		$$ = BINT;
+		spec(BINT);
 	}
 |	LLONG
 	{
-		$$ = BLONG;
+		spec(BLONG);
 	}
 |	LFLOAT
 	{
-		$$ = BFLOAT;
+		spec(BFLOAT);
 	}
 |	LDOUBLE
 	{
-		$$ = BDOUBLE;
+		spec(BDOUBLE);
 	}
 |	LSIGNED
 	{
-		$$ = BSIGNED;
+		spec(BSIGNED);
 	}
 |	LUNSIGNED
 	{
-		$$ = BUNSIGNED;
+		spec(BUNSIGNED);
 	}
 |	LTYPE
 |	sue
