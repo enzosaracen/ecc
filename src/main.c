@@ -2,6 +2,33 @@
 
 #define MAX 32
 
+Src	src;
+FILE	*outfile;
+char	symb[NSYMB];
+Sym	*hash[NHASH];
+int	bits;
+int	class;
+Type	*t;
+int	offset;
+int widths[NTTYPE] = {
+	[TCHAR]		= 1,
+	[TUCHAR]	= 1,
+	[TSHORT]	= 2,
+	[TUSHORT]	= 2,
+	[TINT]		= 4,
+	[TUINT]		= 4,
+	[TLONG]		= 8,
+	[TULONG]	= 8,
+	[TLLONG]	= 8,
+	[TULLONG]	= 8,
+	[TFLOAT]	= 4,
+	[TDOUBLE]	= 8,
+	[TLDOUBLE]	= 8,
+	[TPTR]		= 8,
+};
+
+
+
 int main(int argc, char *argv[])
 {
 	int i;

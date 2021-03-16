@@ -79,57 +79,59 @@ class:
 	class = b;
 }
 
-void getspec(void)
+void setspec(void)
 {
+	t = emalloc(sizeof(Type));
 	switch(bits) {
 	case BVOID:
-		ttype = TVOID;
+		t->ttype = TVOID;
 		goto end;
 	case BCHAR:
 	case BCHAR|BSIGNED:
-		ttype = TCHAR;
+		t->ttype = TCHAR;
 		goto end;
 	case BCHAR|BUNSIGNED:
-		ttype = TUCHAR;
+		t->ttype = TUCHAR;
 		goto end;
 	case BSHORT:
 	case BSHORT|BINT:
 	case BSHORT|BSIGNED:
 	case BSHORT|BINT|BSIGNED:
-		ttype = TSHORT;
+		t->ttype = TSHORT;
 		goto end;
 	case BSHORT|BUNSIGNED:
 	case BSHORT|BUNSIGNED|BINT:
-		ttype = TUSHORT;
+		t->ttype = TUSHORT;
 		goto end;
 	case 0:
 	case BINT:
 	case BSIGNED:
 	case BINT|BSIGNED:
-		ttype = TINT;
+		t->ttype = TINT;
 		goto end;
 	case BUNSIGNED:
 	case BINT|BUNSIGNED:
-		ttype = TUINT;
+		t->ttype = TUINT;
 		goto end;
 	case BLONG:
 	case BLONG|BINT:
 	case BLONG|BSIGNED:
 	case BLONG|BINT|BSIGNED:
-		ttype = TLONG;
+		t->ttype = TLONG;
 		goto end;
 	case BFLOAT:
-		ttype = TFLOAT;
+		t->ttype = TFLOAT;
 		goto end;
 	case BDOUBLE:
-		ttype = TDOUBLE;
+		t->ttype = TDOUBLE;
 		goto end;
 	case BDOUBLE|BLONG:
-		ttype = TLDOUBLE;
+		t->ttype = TLDOUBLE;
 		goto end;
 	default:
 		errorf("illegal combination of types");
 	}
 end:
 	class = bits = 0;
+	t->width = widths[t->ttype];
 }

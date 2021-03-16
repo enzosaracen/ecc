@@ -11,8 +11,8 @@
 }
 
 %type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel idlist parms 
-%type	<node>	stmt id ddecor decor ilist init dlist
-%type	<type>	tname
+%type	<node>	stmt id ilist init dlist
+%type	<sym>	decor ddecor
 
 %token	<sym>	LID LTYPE
 %token	<sval>	LSTRING
@@ -53,15 +53,16 @@ fndef:
 decl:
 	dspec ';'
 	{
-		warnf("empty declaration useless")
+		warnf("empty declaration useless");
 	}
 |	dspec dlist ';'
+	{
+	}
 
 dlist:
 	decor
 |	decor '=' init
 	{
-		$$ = new(OAS, $1, $3);
 	}
 |	dlist ',' dlist
 	{
@@ -70,6 +71,13 @@ dlist:
 
 init:
 	expr
+	{
+		Node *n;
+
+		n = fold($1);
+		if(n->op != OCONST)
+			errorf("initializer must be constant");
+	}
 |	'{' ilist '}'
 	{
 		$$ = $2;
@@ -99,6 +107,15 @@ sudecl:
 sudecor:
 	decor
 |	decor ':' expr
+	{
+		Node *n;
+
+		n = fold($3);
+		if(n->op != OCONST)
+			errorf("bit-field width must be constant");
+		if(n->lval < 0)
+			errorf("bit-field width must be non-negative");
+	}
 
 sudecorlist:
 |	sudecor
@@ -106,15 +123,30 @@ sudecorlist:
 
 dspec:
 	scspec
+	{
+		setspec();
+	}
 |	tspec
+	{
+		setspec();
+	}
 |	qual
+	{
+		setspec();
+	}
 |	scspec dspec
 |	tspec dspec
 |	qual dspec
 
 sqlist:
       	tspec
+	{
+		setspec();
+	}
 |	qual
+	{
+		setspec();
+	}
 |	tspec sqlist
 |	qual sqlist
 
@@ -132,16 +164,23 @@ decor:
 |	'*' qlist ddecor
 	{
 		t = type(TPTR, t);
-		t->width = 8;
+		t->width = widths[TPTR];
+		$$ = $3;
 	}
 
 ddecor:
       	id
 	{
-		$1->sym = t;
-		$1->class = class;
+		$$ = $1->sym;
+		$$->type = t;
+		$$->class = class;
+		$$->offset = offset;
+		offset += $$->type->width;
 	}
 |	'(' decor ')'
+	{
+		$$ = $2;
+	}
 |	ddecor '[' oexpr ']'
 	{
 		Node *n;
@@ -152,16 +191,21 @@ ddecor:
 			n = fold($3);
 			if(n->op != OCONST)
 				errorf("array size must be constant");
-			else if(n->lval < 0)
+			else if(n->lval <= 0)
 				errorf("array size must be positive");
 			t->width = n->lval * t->sub->width;
+			freenode(n);
 		}
+		$$ = $1;
 	}
 |	ddecor '(' parms ')'
 	{
-		
+		$$ = $1;
 	}
 |	ddecor '(' ')'
+	{
+		$$ = $1;
+	}
 
 parms:
      	{
@@ -202,13 +246,7 @@ dadecor:
 
 tname:
 	sqlist
-	{
-		$$ = type(ttype, NULL);
-	}
 |	sqlist adecor
-	{
-		$$ = $2;
-	}
 
 stmt:
 	label
@@ -348,7 +386,7 @@ expr:
 	{
 		$$ = new(OOR, $1, $3);
 	}
-|	expr LANDAND exp
+|	expr LANDAND expr
 	{
 		$$ = new(OANDAND, $1, $3);
 	}
@@ -360,39 +398,39 @@ expr:
 	{
 		$$ = new(OAS, $1, $3);
 	}
-|	expr LADDAS exp
+|	expr LADDAS expr
 	{
 		$$ = new(OADDAS, $1, $3);
 	}
-|	expr LSUBAS exp
+|	expr LSUBAS expr
 	{
 		$$ = new(OSUBAS, $1, $3);
 	}
-|	expr LMULAS exp
+|	expr LMULAS expr
 	{
 		$$ = new(OMULAS, $1, $3);
 	}
-|	expr LDIVAS exp
+|	expr LDIVAS expr
 	{
 		$$ = new(ODIVAS, $1, $3);
 	}
-|	expr LMODAS exp
+|	expr LMODAS expr
 	{
 		$$ = new(OMODAS, $1, $3);
 	}
-|	expr LLSHAS exp
+|	expr LLSHAS expr
 	{
 		$$ = new(OLSHAS, $1, $3);
 	}
-|	expr LRSHAS exp
+|	expr LRSHAS expr
 	{
 		$$ = new(ORSHAS, $1, $3);
 	}
-|	expr LANDAS exp
+|	expr LANDAS expr
 	{
 		$$ = new(OANDAS, $1, $3);
 	}
-|	expr LXORAS exp
+|	expr LXORAS expr
 	{
 		$$ = new(OXORAS, $1, $3);
 	}
@@ -409,7 +447,8 @@ cast:
 	uexpr
 |	'(' tname ')' cast
 	{
-		$$ = new(OCAST, $2, $4);
+		$$ = new(OCAST, $4, NULL);
+		$$->type = t;
 	}
 
 uexpr:
@@ -452,7 +491,8 @@ uexpr:
 	}
 |	LSIZEOF '(' tname ')'
 	{
-		$$ = new(OSIZEOF, $3, NULL);
+		$$ = new(OSIZEOF, NULL, NULL);
+		$$->type = t;
 	}
 	
 pexpr:

@@ -25,6 +25,8 @@ struct Sym {
 	Sym		*next;
 	unsigned	block;
 	int		class;
+	Node		*init;
+	unsigned	offset;
 };
 
 enum {
@@ -47,6 +49,7 @@ enum {
 	TPTR,
 	TSTRUCT,
 	TVOID,
+	NTTYPE,
 };
 
 enum {
@@ -132,7 +135,7 @@ struct Node {
 	Node	*l;
 	Node	*r;
 	Sym	*sym;
-	Type	*t;
+	Type	*type;
 	long	lval;
 	char	*sval;
 };
@@ -182,20 +185,21 @@ void prtree(Node *, int);
 /*
  * 	decl.c
  */
-Type *decl(Node *);
+Type *type(int, Type *);
 void spec(int);
-int getspec(void);
+void setspec(void);
 
 /*
  *	fold.c
  */
 Node *fold(Node *);
 
-Src	src;
-FILE	*outfile;
-char	symb[NSYMB];
-Sym	*hash[NHASH];
-int	bits;
-int	class;
-int	ttype;
-Type	*t;
+extern	Src	src;
+extern	FILE	*outfile;
+extern	char	symb[NSYMB];
+extern	Sym	*hash[NHASH];
+extern	int	bits;
+extern	int	class;
+extern	Type	*t;
+extern	int	offset;
+extern	int	widths[NTTYPE];
