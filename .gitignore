@@ -1,3 +1,4 @@
 *.o
 src/y.tab.h
+src/y.tab.c
 ecc
