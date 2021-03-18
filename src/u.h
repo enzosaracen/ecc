@@ -6,7 +6,6 @@
 
 #define NHASH 1024
 #define NSYMB 1024
-#define	NPARM 32
 
 typedef struct Src Src;
 typedef struct Sym Sym;
