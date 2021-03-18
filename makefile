@@ -26,4 +26,4 @@ src/y.tab.h src/cc.o:	src/cc.y src/u.h
 .PHONY:	clean
 
 clean:
-	rm -f ecc $(OBJ) src/cc.o src/y.tab.c
+	rm -f ecc $(OBJ) src/cc.o src/y.tab.c src/y.tab.h
