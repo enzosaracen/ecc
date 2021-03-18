@@ -55,7 +55,7 @@ enum {
 };
 
 enum {
-	CNONE = 0,
+	CNONE,
 	CGLOBAL,
 	CAUTO,
 	CEXTERN,
@@ -65,7 +65,7 @@ enum {
 };
 
 struct Type {
-	int	t;
+	int	ttype;
 	int	width;
 	Type	*sub;
 	Type	*parms;
@@ -93,6 +93,7 @@ enum {
 	ODIVAS,
 	ODOT,
 	ODOWHILE,
+	OELLIPSIS,
 	OEQ,
 	OFOR,
 	OFUNC,
@@ -192,6 +193,7 @@ void	prtree(Node *, int);
  */
 Type	*type(int, Type *);
 Type	*decl(Node *, Type *, int);
+Type	*parms(Node *);
 void	spec(int);
 Type	*basetype(void);
 
@@ -208,4 +210,4 @@ extern	int	bits;
 extern	int	lastclass;
 extern	Type	*lasttype;
 extern	int	offset;
-extern	Type	types[];
+extern	Type	*types[];

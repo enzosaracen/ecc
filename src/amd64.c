@@ -1,18 +1,18 @@
 #include "u.h"
 
 Type *types[] = {
-	[TVOID]		= &(Type){.t = TVOID};
-	[TUCHAR]	= &(Type){.t = TUCHAR,	.width = 1};
-	[TSHORT]	= &(Type){.t = TSHORT,	.width = 2};
-	[TUSHORT]	= &(Type){.t = TUSHORT,	.width = 2};
-	[TINT]		= &(Type){.t = TINT,	.width = 4};
-	[TUINT]		= &(Type){.t = TUINT,	.width = 4};
-	[TLONG]		= &(Type){.t = TLONG,	.width = 8};
-	[TULONG]	= &(Type){.t = TULONG,	.width = 8};
-	[TLLONG]	= &(Type){.t = TLLONG,	.width = 8};
-	[TULLONG]	= &(Type){.t = TULLONG,	.width = 8};
-	[TFLOAT]	= &(Type){.t = TFLOAT,	.width = 4};
-	[TDOUBLE]	= &(Type){.t = TDOUBLE,	.width = 8};
-	[TLDOUBLE]	= &(Type){.t = TLDOUBLE,	.width = 8};
-	[TPTR]		= &(Type){.t = TPTR,	.width = 8};
+	[TVOID]		= &(Type){.ttype = TVOID},
+	[TUCHAR]	= &(Type){.ttype = TUCHAR,		.width = 1},
+	[TSHORT]	= &(Type){.ttype = TSHORT,		.width = 2},
+	[TUSHORT]	= &(Type){.ttype = TUSHORT,		.width = 2},
+	[TINT]		= &(Type){.ttype = TINT,		.width = 4},
+	[TUINT]		= &(Type){.ttype = TUINT,		.width = 4},
+	[TLONG]		= &(Type){.ttype = TLONG,		.width = 8},
+	[TULONG]	= &(Type){.ttype = TULONG,		.width = 8},
+	[TLLONG]	= &(Type){.ttype = TLLONG,		.width = 8},
+	[TULLONG]	= &(Type){.ttype = TULLONG,		.width = 8},
+	[TFLOAT]	= &(Type){.ttype = TFLOAT,		.width = 4},
+	[TDOUBLE]	= &(Type){.ttype = TDOUBLE,		.width = 8},
+	[TLDOUBLE]	= &(Type){.ttype = TLDOUBLE,		.width = 8},
+	[TPTR]		= &(Type){.ttype = TPTR,		.width = 8},
 };

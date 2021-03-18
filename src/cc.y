@@ -18,7 +18,7 @@
 %token	<lval>	LNUM
 %token	LVOID LCHAR LSHORT LINT LLONG LFLOAT LDOUBLE LSIGNED LUNSIGNED LUNION LSTRUCT LENUM
 %token	LADDAS LSUBAS LMULAS LDIVAS LMODAS LLSHAS LRSHAS LANDAS LXORAS LORAS LOROR LANDAND
-%token	LEQ LNE LLE LGE LLSH LRSH LARROW LINC LDEC LSIZEOF LELLIPSES LIF LELSE LSWITCH LCASE LDEFAULT 
+%token	LEQ LNE LLE LGE LLSH LRSH LARROW LINC LDEC LSIZEOF LIF LELSE LSWITCH LCASE LDEFAULT 
 %token	LWHILE LDO LFOR LGOTO LCONTINUE LBREAK LRETURN LAUTO LREGISTER LEXTERN LSTATIC LTYPEDEF LCONST LVOLATILE
 
 %left	','
@@ -496,10 +496,10 @@ expr:
 
 cast:
 	uexpr
-|	'(' tname ')' cast
+|	'(' tspec ')' cast
 	{
 		$$ = new(OCAST, $4, NULL);
-		$$->type = t;
+		$$->type = lasttype;
 	}
 
 uexpr:
@@ -540,10 +540,10 @@ uexpr:
 	{
 		$$ = new(OSIZEOF, $2, NULL);
 	}
-|	LSIZEOF '(' tname ')'
+|	LSIZEOF '(' tspec ')'
 	{
 		$$ = new(OSIZEOF, NULL, NULL);
-		$$->type = t;
+		$$->type = lasttype;
 	}
 	
 pexpr:

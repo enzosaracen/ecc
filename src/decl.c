@@ -1,12 +1,12 @@
 #include "u.h"
 #include "y.tab.h"
 
-Type *type(int t, Type *sub)
+Type *type(int ttype, Type *sub)
 {
 	Type *t;
 
 	t = emalloc(sizeof(Type));
-	t->t = t;
+	t->ttype = ttype;
 	t->sub = sub;
 	return t;
 }
@@ -38,7 +38,7 @@ Type *decl(Node *n, Type *t, int c)
 		case OFUNC:
 			t = type(TFUNC, t);
 			t->parms = parms(n->r);
-			n = n->left;
+			n = n->l;
 			break;
 		case OID:
 			s = n->sym;
@@ -52,7 +52,6 @@ Type *decl(Node *n, Type *t, int c)
 				break;
 			}
 			s->class = c;
-			goto end;
 		}
 	}
 	return t;
@@ -60,13 +59,6 @@ Type *decl(Node *n, Type *t, int c)
 
 Type *parms(Node *n)
 {
-	if(n == NULL)
-		return types[TVOID];
-	for(;;)	{
-		switch(n->op) {
-		case 
-		}
-	}
 }
 
 void spec(int b)
