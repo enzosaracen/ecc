@@ -8,15 +8,19 @@ Type *type(int ttype, Type *sub)
 	t = emalloc(sizeof(Type));
 	t->ttype = ttype;
 	t->sub = sub;
+	t->sym = NULL;
+	t->list = NULL;
 	return t;
 }
 
-Type *decl(Node *n, Type *t, int c)
+Type *decl(Node *n, Type *t, int c, int setsym)
 {
 	Node *n2;
 	Sym *s;
 
 	for(;;) {
+		if(n == NULL)
+			return t;
 		switch(n->op) {
 		case OARRAY:
 			t = type(TARRAY, t);
@@ -28,6 +32,7 @@ Type *decl(Node *n, Type *t, int c)
 				else if(n2->lval < 0)
 					errorf("array size must be positive");
 				t->width = n2->lval * t->sub->width;
+				freenode(n2);
 			}
 			n = n->l;
 			break;
@@ -37,22 +42,40 @@ Type *decl(Node *n, Type *t, int c)
 			break;
 		case OFUNC:
 			t = type(TFUNC, t);
-			t->parms = parms(n->r);
+			t->list = parms(n->r);
 			n = n->l;
 			break;
 		case OID:
+			if(!setsym)
+				return t;
 			s = n->sym;
 			s->type = t;
 			s->class = c;
-			goto end;
+			return t;
 		}
 	}
-end:
-	return t;
 }
 
 Type *parms(Node *n)
 {
+	Type *t;
+
+	if(n == NULL)
+		return NULL;
+	switch(n->op) {
+	case OPARM:
+		if(n->l == NULL)
+			return n->type;
+		t = decl(n->l, n->type, CNONE, 0);
+		return t;
+	case OLIST:
+		t = parms(n->l);
+		t->list = parms(n->r);
+		return t;
+	case OELLIPSIS:
+		/* ignore for now  */
+		return parms(n->l);
+	}
 }
 
 void spec(int b)

@@ -10,7 +10,7 @@
 }
 
 %type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel idlist stmt 
-%type	<node>	id ilist init dlist decor ddecor oadecor adecor dadecor parms
+%type	<node>	id ilist init dlist decor ddecor oadecor adecor dadecor parms fndef
 %type	<type>	tspec
 
 %token	<sym>	LID LTYPE
@@ -40,6 +40,9 @@ prog:
 
 xdecl:
 	fndef
+	{
+		freenode($1);
+	}
 |	decl
 
 fndef:
@@ -55,11 +58,13 @@ decl:
 dlist:
 	decor
 	{
-		decl($1, lasttype, lastclass);
+		decl($1, lasttype, lastclass, 1);
+		freenode($1);
 	}
 |	decor '=' init
 	{
-		decl($1, lasttype, lastclass);
+		decl($1, lasttype, lastclass, 1);
+		freenode($1);
 	}
 |	dlist ',' dlist
 
@@ -96,21 +101,27 @@ ddecor:
 	{
 		$$ = new(OFUNC, $1, $3);
 	}
+|	ddecor '(' ')'
+	{
+		$$ = new(OFUNC, $1, NULL);
+	}
 
 parms:
-	tspec adecor
+	tspec oadecor
 	{
-		$$ = $2;
+		$$ = new(OPARM, $2, NULL);
+		$$->type = $1;
 	}
 |	tspec decor
 	{
-		$$ = $2;
+		$$ = new(OPARM, $2, NULL);
+		$$->type = $1;
 	}
 |	parms ',' parms
 	{
 		$$ = new(OLIST, $1, $3);
 	}
-|	'.' '.' '.'
+|	parms ',' '.' '.' '.'
 	{
 		$$ = new(OELLIPSIS, NULL, NULL);
 	}

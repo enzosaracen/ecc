@@ -4,9 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define NHASH 1024
-#define NSYMB 1024
-
 typedef struct Src Src;
 typedef struct Sym Sym;
 typedef struct Type Type;
@@ -67,7 +64,8 @@ struct Type {
 	int	ttype;
 	int	width;
 	Type	*sub;
-	Type	*parms;
+	Sym	*sym;
+	Type	*list;
 };
 
 enum {
@@ -117,6 +115,7 @@ enum {
 	OOR,
 	OORAS,
 	OOROR,
+	OPARM,
 	OPOS,
 	OPOSTDEC,
 	OPOSTINC,
@@ -192,17 +191,16 @@ void	prtree(Node *, int);
  * 	decl.c
  */
 Type	*type(int, Type *);
-Type	*decl(Node *, Type *, int);
+Type	*decl(Node *, Type *, int, int);
 Type	*parms(Node *);
 void	spec(int);
 Type	*basetype(void);
 
 extern	Src	src;
 extern	FILE	*outfile;
-extern	char	symb[NSYMB];
-extern	Sym	*hash[NHASH];
 extern	int	bits;
 extern	int	lastclass;
 extern	Type	*lasttype;
 extern	int	offset;
 extern	Type	*types[];
+extern	char	*lastname;

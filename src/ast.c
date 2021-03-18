@@ -13,10 +13,10 @@ Node *new(int op, Node *l, Node *r)
 
 void freenode(Node *n)
 {
-	if(n->l != NULL)
-		freenode(n->l);
-	if(n->r != NULL)
-		freenode(n->r);
+	if(n == NULL)
+		return;
+	freenode(n->l);
+	freenode(n->r);
 	free(n);
 }
 

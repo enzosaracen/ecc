@@ -4,12 +4,11 @@
 
 Src	src;
 FILE	*outfile;
-char	symb[NSYMB];
-Sym	*hash[NHASH];
 int	bits;
 int	lastclass;
 Type	*lasttype;
 int	offset;
+char	*lastname;
 
 int main(int argc, char *argv[])
 {

@@ -1,9 +1,13 @@
 #include "u.h"
 #include "y.tab.h"
 
+#define NHASH 1024
+#define NLBUF 1024
 #define NOPEEK -2
 
 char peek;
+char lbuf[NLBUF];
+Sym *hash[NHASH];
 struct {
 	char b[BUFSIZ], *p;
 	int c;		
@@ -56,8 +60,8 @@ void lexinit(void)
 	peek = NOPEEK;
 	for(i = 0; rsvd[i].s; i++) {
 		for(j = 0; rsvd[i].s[j]; j++)
-			symb[j] = rsvd[i].s[j];
-		symb[j] = 0;
+			lbuf[j] = rsvd[i].s[j];
+		lbuf[j] = 0;
 		s = lookup();
 		s->lex = rsvd[i].lex;
 	}
@@ -70,21 +74,22 @@ Sym *lookup(void)
 	unsigned h;
 	char *cp;
 
-	cp = symb;
+	cp = lbuf;
 	h = 5381;
 	while((c = *cp++))
 		h = ((h << 5) + h) + c;
 	h %= NHASH;
 
-	c = symb[0];
+	c = lbuf[0];
 	for(s = hash[h]; s; s = s->next) {
 		if(s->name[0] != c)
 			continue;
-		if(strcmp(s->name, symb) == 0)
+		if(strcmp(s->name, lbuf) == 0)
 			return s;
 	}
 	s = emalloc(sizeof(Sym));
-	s->name = estrdup(symb);
+	s->name = estrdup(lbuf);
+	lastname = s->name;
 	s->next = hash[h];
 	hash[h] = s;
 	s->type = NULL;
@@ -118,12 +123,20 @@ char next(void)
 	return c;
 }
 
+/* kind of slow to do this, so might change */
+void putbuf(char *cp, char c)
+{
+	if(cp-lbuf >= NLBUF-1)
+		errorf("token too large");
+	*cp = c;
+}
+
 int yylex(void)
 {
 	long v;
 	int c;
 	char c2, *cp;
-
+start:
 	if(peek != NOPEEK) {
 		c = peek;
 		peek = NOPEEK;
@@ -134,7 +147,7 @@ int yylex(void)
 	if(isdigit(c)) 
 		goto lexnum;
 	if(isalpha(c) || c == '_') {
-		cp = symb;
+		cp = lbuf;
 		goto lexid;
 	}
 	switch(c) {
@@ -165,6 +178,23 @@ int yylex(void)
 		c2 = next();
 		if(c2 == '=')
 			return LDIVAS;
+		else if(c2 == '*') {
+			for(;;) {
+				c = next();
+				if(c == '*') {
+					c = next();
+					if(c == '/')
+						goto start;
+				}
+				if(c == EOF)
+					errorf("unterminated comment");
+			}
+		} else if(c2 == '/') {
+			while((c = next()) != '\n')
+				if(c == EOF)
+					errorf("unterminated comment");
+			goto start;
+		}
 		break;
 	case '%':
 		c2 = next();
@@ -223,7 +253,13 @@ int yylex(void)
 			return LXORAS;
 		break;
 	case '"':
-		while((c2 = next()) != '"');
+		cp = lbuf;
+		while((c2 = next()) != '"') {
+			if(c2 == EOF || c2 == '\n')
+				errorf("unterminated string");
+			putbuf(cp++, c2);
+		}
+		yylval.sval = estrdup(lbuf);
 		return LSTRING;
 		break;
 	default:
@@ -241,8 +277,8 @@ lexnum:
 	yylval.lval = v;
 	return LNUM;
 lexid:
-	while(isalnum(c) || c == '_') {
-		*cp++ = c;
+	while(isalnum(c) || c == '_')  {
+		putbuf(cp++, c);
 		c = next();
 	}
 	peek = c;
