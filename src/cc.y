@@ -6,17 +6,15 @@
 	 Node	*node;
 	 Type	*type;
 	 char	*sval;
-	 char	cval;
 	 long	lval;
 }
 
-%type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel idlist parms 
-%type	<node>	stmt id ilist init dlist
-%type	<sym>	decor ddecor
+%type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel idlist stmt 
+%type	<node>	id ilist init dlist decor ddecor oadecor adecor dadecor parms
+%type	<type>	tspec
 
 %token	<sym>	LID LTYPE
 %token	<sval>	LSTRING
-%token	<cval>	LCHARLIT
 %token	<lval>	LNUM
 %token	LVOID LCHAR LSHORT LINT LLONG LFLOAT LDOUBLE LSIGNED LUNSIGNED LUNION LSTRUCT LENUM
 %token	LADDAS LSUBAS LMULAS LDIVAS LMODAS LLSHAS LRSHAS LANDAS LXORAS LORAS LOROR LANDAND
@@ -46,46 +44,29 @@ xdecl:
 
 fndef:
 	decor block
-|	dspec decor block
+|	tspec decor block
 |	decor dlist block
-|	dspec decor dlist block
+|	tspec decor dlist block
 
 decl:
-	dspec ';'
-	{
-		warnf("empty declaration useless");
-	}
-|	dspec dlist ';'
-	{
-	}
+	tspec ';'
+|	tspec dlist ';'
 
 dlist:
 	decor
+	{
+		decl($1, lasttype, lastclass);
+	}
 |	decor '=' init
 	{
+		decl($1, lasttype, lastclass);
 	}
 |	dlist ',' dlist
-	{
-		$$ = new(OLIST, $1, $3);
-	}
 
 init:
 	expr
-	{
-		Node *n;
-
-		n = fold($1);
-		if(n->op != OCONST)
-			errorf("initializer must be constant");
-	}
 |	'{' ilist '}'
-	{
-		$$ = $2;
-	}
 |	'{' ilist ',' '}'
-	{
-		$$ = $2;
-	}
 
 ilist:
 	init
@@ -93,6 +74,120 @@ ilist:
 	{
 		$$ = new(OLIST, $1, $3);
 	}
+	
+decor:
+	ddecor
+|	'*' qlist decor
+	{
+		$$ = new(OIND, $3, NULL);
+	}
+
+ddecor:
+      	id
+|	'(' decor ')'
+	{
+		$$ = $2;
+	}
+|	ddecor '[' oexpr ']'
+	{
+		$$ = new(OARRAY, $1, $3);
+	}
+|	ddecor '(' parms ')'
+	{
+		$$ = new(OFUNC, $1, $3);
+	}
+
+parms:
+	tspec adecor
+	{
+		$$ = $2;
+	}
+|	tspec decor
+	{
+		$$ = $2;
+	}
+|	parms ',' parms
+	{
+		$$ = new(OLIST, $1, $3);
+	}
+|	'.' '.' '.'
+	{
+		$$ = new(OELLIPSIS, NULL, NULL);
+	}
+
+idlist:
+	id
+|	idlist ',' idlist
+	{
+		$$ = new(OLIST, $1, $3);
+	}
+
+oadecor:
+	{
+		$$ = NULL;
+	}
+|	adecor
+
+adecor:
+	dadecor
+|	'*' qlist
+	{
+		$$ = new(OIND, NULL, NULL);
+	}
+|	'*' qlist dadecor
+	{
+		$$ = new(OIND, $3, NULL);
+	}
+
+dadecor:
+	'(' oadecor ')'
+	{
+		$$ = new(OFUNC, NULL, $2);
+	}
+|	'[' oexpr ']'
+	{
+		$$ = new(OARRAY, NULL, $2);
+	}
+|	'(' parms ')'
+	{
+		$$ = new(OFUNC, NULL, $2);
+	}
+|	dadecor '[' oexpr ']'
+	{
+		$$ = new(OARRAY, $1, $3);
+	}
+|	dadecor '(' parms ')'
+	{
+		$$ = new(OFUNC, $1, $3);
+	}
+
+tspec:
+	qctlist
+	{
+		$$ = basetype();
+		bits = 0;
+		lasttype = $$;
+	}
+|	suespec
+	{
+		lasttype = $$;
+	}
+|	LTYPE
+	{
+		$$ = $1->type;
+		lasttype = $$;
+	}
+
+suespec:
+	LSTRUCT tag
+|	LSTRUCT	tag subody
+|	LSTRUCT	subody
+|	LUNION tag
+|	LUNION tag subody 
+|	LUNION subody
+|	LENUM tag
+|	LENUM tag enumbody
+|	LENUM enumbody
 
 subody:
 	'{' sudecllist '}'
@@ -107,48 +202,10 @@ sudecl:
 sudecor:
 	decor
 |	decor ':' expr
-	{
-		Node *n;
-
-		n = fold($3);
-		if(n->op != OCONST)
-			errorf("bit-field width must be constant");
-		if(n->lval < 0)
-			errorf("bit-field width must be non-negative");
-	}
 
 sudecorlist:
 |	sudecor
 |	sudecorlist ',' sudecor
-
-dspec:
-	scspec
-	{
-		setspec();
-	}
-|	tspec
-	{
-		setspec();
-	}
-|	qual
-	{
-		setspec();
-	}
-|	scspec dspec
-|	tspec dspec
-|	qual dspec
-
-sqlist:
-      	tspec
-	{
-		setspec();
-	}
-|	qual
-	{
-		setspec();
-	}
-|	tspec sqlist
-|	qual sqlist
 
 enumbody:
 	'{' enumlist '}'
@@ -159,94 +216,88 @@ enumlist:
 |	enumlist ',' enumlist
 |	enumlist ','
 
-decor:
-     	ddecor
-|	'*' qlist ddecor
-	{
-		t = type(TPTR, t);
-		t->width = widths[TPTR];
-		$$ = $3;
-	}
+qctlist:
+	cname
+|	tname
+|	qname
+|	cname qctlist
+|	tname qctlist
+|	qname qctlist
 
-ddecor:
-      	id
-	{
-		$$ = $1->sym;
-		$$->type = t;
-		$$->class = class;
-		$$->offset = offset;
-		offset += $$->type->width;
-	}
-|	'(' decor ')'
-	{
-		$$ = $2;
-	}
-|	ddecor '[' oexpr ']'
-	{
-		Node *n;
+sqlist:
+	cname
+|	qname
+|	cname sqlist
+|	qname sqlist
 
-		t = type(TARRAY, t);
-		t->width = 0;
-		if($3 != NULL) {
-			n = fold($3);
-			if(n->op != OCONST)
-				errorf("array size must be constant");
-			else if(n->lval <= 0)
-				errorf("array size must be positive");
-			t->width = n->lval * t->sub->width;
-			freenode(n);
-		}
-		$$ = $1;
-	}
-|	ddecor '(' parms ')'
+qlist:
+|	qname
+|	qlist qname
+
+qname:
+    	LCONST
+|	LVOLATILE
+
+cname:
+      	LAUTO
 	{
-		$$ = $1;
+		spec(BAUTO);
 	}
-|	ddecor '(' ')'
+|	LREGISTER
 	{
-		$$ = $1;
+		spec(BREGISTER);
 	}
-
-parms:
-     	{
-		$$ = NULL;
-	}
-|	pdecl
-|	parms ',' parms
+|	LSTATIC
 	{
-		$$ = new(OLIST, $1, $3);
+		spec(BSTATIC);
 	}
-|	parms ',' LELLIPSES
-
-pdecl:
-     	dspec
-|	dspec decor
-|	dspec adecor
-
-idlist:
-	id
-|	idlist ',' idlist
+|	LEXTERN
 	{
-		$$ = new(OLIST, $1, $3);
+		spec(BEXTERN);
 	}
-
-adecor:
-	'*'
-|	dadecor
-|	'*' dadecor
-
-dadecor:
-	'(' ')'
-|	'(' adecor ')'
-|	'[' oexpr ']'
-|	'(' parms ')'
-|	dadecor '[' oexpr ']'
-|	dadecor '(' ')'
-|	dadecor '(' parms ')'
+|	LTYPEDEF
+	{
+		spec(BTYPEDEF);
+	}
 
 tname:
-	sqlist
-|	sqlist adecor
+     	LVOID
+	{
+		spec(BVOID);
+	}
+|	LCHAR
+	{
+		spec(BCHAR);
+	}
+|	LSHORT
+	{
+		spec(BSHORT);
+	}
+|	LINT
+	{
+		spec(BINT);
+	}
+|	LLONG
+	{
+		spec(BLONG);
+	}
+|	LFLOAT
+	{
+		spec(BFLOAT);
+	}
+|	LDOUBLE
+	{
+		spec(BDOUBLE);
+	}
+|	LSIGNED
+	{
+		spec(BSIGNED);
+	}
+|	LUNSIGNED
+	{
+		spec(BUNSIGNED);
+	}
+
 
 stmt:
 	label
@@ -549,86 +600,9 @@ oelist:
 		$$ = new(OLIST, $1, $3);
 	}
 
-qlist:
-|	qual
-|	qlist qual
-
-qual:
-    	LCONST
-|	LVOLATILE
-
-scspec:
-      	LAUTO
-	{
-		spec(BAUTO);
-	}
-|	LREGISTER
-	{
-		spec(BREGISTER);
-	}
-|	LSTATIC
-	{
-		spec(BSTATIC);
-	}
-|	LEXTERN
-	{
-		spec(BEXTERN);
-	}
-|	LTYPEDEF
-	{
-		spec(BTYPEDEF);
-	}
-
-tspec:
-     	LVOID
-	{
-		spec(BVOID);
-	}
-|	LCHAR
-	{
-		spec(BCHAR);
-	}
-|	LSHORT
-	{
-		spec(BSHORT);
-	}
-|	LINT
-	{
-		spec(BINT);
-	}
-|	LLONG
-	{
-		spec(BLONG);
-	}
-|	LFLOAT
-	{
-		spec(BFLOAT);
-	}
-|	LDOUBLE
-	{
-		spec(BDOUBLE);
-	}
-|	LSIGNED
-	{
-		spec(BSIGNED);
-	}
-|	LUNSIGNED
-	{
-		spec(BUNSIGNED);
-	}
+tag:
+	LID
 |	LTYPE
-|	sue
-
-sue:
-	LSTRUCT id
-|	LSTRUCT	id subody
-|	LSTRUCT	subody
-|	LUNION id
-|	LUNION id subody 
-|	LUNION subody
-|	LENUM id
-|	LENUM id enumbody
-|	LENUM enumbody
 
 id:
 	LID

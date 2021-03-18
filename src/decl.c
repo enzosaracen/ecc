@@ -1,23 +1,21 @@
 #include "u.h"
 #include "y.tab.h"
 
-Type *type(int ttype, Type *sub)
+Type *type(int t, Type *sub)
 {
 	Type *t;
 
 	t = emalloc(sizeof(Type));
-	t->ttype = ttype;
+	t->t = t;
 	t->sub = sub;
 	return t;
 }
 
-/*
-Type *decl(Node *n)
+Type *decl(Node *n, Type *t, int c)
 {
-	Type *t;
 	Node *n2;
+	Sym *s;
 
-	t = type(getspec(), NULL);
 	for(;;) {
 		switch(n->op) {
 		case OARRAY:
@@ -34,18 +32,42 @@ Type *decl(Node *n)
 			n = n->l;
 			break;
 		case OIND:
-			t = type(TPTR, t);
-			t->width = 8;
+			t = types[TPTR];
 			n = n->l;
 			break;
+		case OFUNC:
+			t = type(TFUNC, t);
+			t->parms = parms(n->r);
+			n = n->left;
+			break;
 		case OID:
-			n->sym->type = t;
-			n->sym->class = class;
+			s = n->sym;
+			s->type = t;
+			switch(c) {
+			case CNONE:
+				if(s->block == 0)
+					s->class = CGLOBAL;
+				else
+					s->class = CAUTO;
+				break;
+			}
+			s->class = c;
 			goto end;
 		}
 	}
 	return t;
-}*/
+}
+
+Type *parms(Node *n)
+{
+	if(n == NULL)
+		return types[TVOID];
+	for(;;)	{
+		switch(n->op) {
+		case 
+		}
+	}
+}
 
 void spec(int b)
 {
@@ -74,64 +96,49 @@ void spec(int b)
 		return;
 	}
 class:
-	if(class != CNONE)
+	if(lastclass != CNONE)
 		errorf("multiple storage classes");
-	class = b;
+	lastclass = b;
 }
 
-void setspec(void)
+Type *basetype(void)
 {
-	t = emalloc(sizeof(Type));
 	switch(bits) {
 	case BVOID:
-		t->ttype = TVOID;
-		goto end;
+		return types[TVOID];
 	case BCHAR:
 	case BCHAR|BSIGNED:
-		t->ttype = TCHAR;
-		goto end;
+		return types[TCHAR];
 	case BCHAR|BUNSIGNED:
-		t->ttype = TUCHAR;
-		goto end;
+		return types[TUCHAR];
 	case BSHORT:
 	case BSHORT|BINT:
 	case BSHORT|BSIGNED:
 	case BSHORT|BINT|BSIGNED:
-		t->ttype = TSHORT;
-		goto end;
+		return types[TSHORT];
 	case BSHORT|BUNSIGNED:
 	case BSHORT|BUNSIGNED|BINT:
-		t->ttype = TUSHORT;
-		goto end;
+		return types[TUSHORT];
 	case 0:
 	case BINT:
 	case BSIGNED:
 	case BINT|BSIGNED:
-		t->ttype = TINT;
-		goto end;
+		return types[TINT];
 	case BUNSIGNED:
 	case BINT|BUNSIGNED:
-		t->ttype = TUINT;
-		goto end;
+		return types[TUINT];
 	case BLONG:
 	case BLONG|BINT:
 	case BLONG|BSIGNED:
 	case BLONG|BINT|BSIGNED:
-		t->ttype = TLONG;
-		goto end;
+		return types[TLONG];
 	case BFLOAT:
-		t->ttype = TFLOAT;
-		goto end;
+		return types[TFLOAT];
 	case BDOUBLE:
-		t->ttype = TDOUBLE;
-		goto end;
+		return types[TDOUBLE];
 	case BDOUBLE|BLONG:
-		t->ttype = TLDOUBLE;
-		goto end;
+		return types[TLDOUBLE];
 	default:
 		errorf("illegal combination of types");
 	}
-end:
-	class = bits = 0;
-	t->width = widths[t->ttype];
 }

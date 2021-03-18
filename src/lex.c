@@ -87,6 +87,12 @@ Sym *lookup(void)
 	s->name = estrdup(symb);
 	s->next = hash[h];
 	hash[h] = s;
+	s->type = NULL;
+	s->suetag = NULL;
+	s->block = 0;
+	s->class = CNONE;
+	s->init = NULL;
+	s->offset = 0;
 	s->lex = LID;
 	return s;
 }
@@ -216,14 +222,6 @@ int yylex(void)
 		if(c2 == '=')
 			return LXORAS;
 		break;
-	case '.':
-		c2 = next();
-		if(c2 == '.') {
-			if(next() != '.')
-				errorf("expected '...'");
-			return LELLIPSES;
-		}
-		break;
 	case '"':
 		while((c2 = next()) != '"');
 		return LSTRING;
@@ -250,6 +248,8 @@ lexid:
 	peek = c;
 	*cp = 0;
 	yylval.sym = lookup();
+	if(yylval.sym->class == CTYPEDEF)
+		yylval.sym->lex = LTYPE;
 	return yylval.sym->lex;
 }
 

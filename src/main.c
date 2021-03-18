@@ -7,27 +7,9 @@ FILE	*outfile;
 char	symb[NSYMB];
 Sym	*hash[NHASH];
 int	bits;
-int	class;
-Type	*t;
+int	lastclass;
+Type	*lasttype;
 int	offset;
-int widths[NTTYPE] = {
-	[TCHAR]		= 1,
-	[TUCHAR]	= 1,
-	[TSHORT]	= 2,
-	[TUSHORT]	= 2,
-	[TINT]		= 4,
-	[TUINT]		= 4,
-	[TLONG]		= 8,
-	[TULONG]	= 8,
-	[TLLONG]	= 8,
-	[TULLONG]	= 8,
-	[TFLOAT]	= 4,
-	[TDOUBLE]	= 8,
-	[TLDOUBLE]	= 8,
-	[TPTR]		= 8,
-};
-
-
 
 int main(int argc, char *argv[])
 {
@@ -69,10 +51,6 @@ int main(int argc, char *argv[])
 			*filesp++ = argv[i];
 		}
 	}
-	/*
-	 * todo - only open outfile when need to b/c if an infile is unreadable, will create an empty outfile (or in any compiler error as well).
-	 * or maybe just delete outfile in any error case, idk
-	 */
 	if(!outname)
 		outname = "a.out";
 	outfile = fopen(outname, "w");

@@ -6,6 +6,7 @@
 
 #define NHASH 1024
 #define NSYMB 1024
+#define	NPARM 32
 
 typedef struct Src Src;
 typedef struct Sym Sym;
@@ -21,6 +22,7 @@ struct Src {
 struct Sym {
 	int		lex;
 	Type		*type;
+	Type		*suetag;
 	char		*name;
 	Sym		*next;
 	unsigned	block;
@@ -30,6 +32,7 @@ struct Sym {
 };
 
 enum {
+	TVOID,
 	TCHAR,
 	TUCHAR,
 	TSHORT,
@@ -43,17 +46,17 @@ enum {
 	TFLOAT,
 	TDOUBLE,
 	TLDOUBLE,
+	TPTR,
 	TARRAY,
 	TENUM,
 	TFUNC,
-	TPTR,
 	TSTRUCT,
-	TVOID,
-	NTTYPE,
+	TUNION,
 };
 
 enum {
 	CNONE = 0,
+	CGLOBAL,
 	CAUTO,
 	CEXTERN,
 	CREGISTER,
@@ -62,9 +65,10 @@ enum {
 };
 
 struct Type {
-	int	ttype;
+	int	t;
 	int	width;
 	Type	*sub;
+	Type	*parms;
 };
 
 enum {
@@ -77,10 +81,11 @@ enum {
 	OARRAY,
 	OARROW,
 	OAS,
+	OBIT,
 	OBNOT,
 	OBREAK,
-	OCAST,
 	OCASE,
+	OCAST,
 	OCOND,
 	OCONST,
 	OCONTINUE,
@@ -160,46 +165,47 @@ enum {
 /* 
  *	util.c
  */
-void *emalloc(int);
-char *estrdup(char*);
-void panic(char *, ...);
-void errorf(char *, ...);
-void warnf(char *, ...);
-void yyerror(char *);
+void	*emalloc(int);
+char	*estrdup(char*);
+void	panic(char *, ...);
+void	errorf(char *, ...);
+void	warnf(char *, ...);
+void	yyerror(char *);
 
 /*
  *	lex.c
  */
-void lexinit(void);
-Sym *lookup(void);
-int yylex(void);
-void compile(void);
+void	lexinit(void);
+Sym	*lookup(void);
+int	yylex(void);
+void	compile(void);
 
 /*
  * 	ast.c
  */
-Node *new(int, Node *, Node *);
-void freenode(Node *);
-void prtree(Node *, int);
+Node	*new(int, Node *, Node *);
+void	freenode(Node *);
+void	prtree(Node *, int);
 
 /*
  * 	decl.c
  */
-Type *type(int, Type *);
-void spec(int);
-void setspec(void);
+Type	*type(int, Type *);
+Type	*decl(Node *, Type *, int);
+void	spec(int);
+Type	*basetype(void);
 
 /*
  *	fold.c
  */
-Node *fold(Node *);
+Node	*fold(Node *);
 
 extern	Src	src;
 extern	FILE	*outfile;
 extern	char	symb[NSYMB];
 extern	Sym	*hash[NHASH];
 extern	int	bits;
-extern	int	class;
-extern	Type	*t;
+extern	int	lastclass;
+extern	Type	*lasttype;
 extern	int	offset;
-extern	int	widths[NTTYPE];
+extern	Type	types[];

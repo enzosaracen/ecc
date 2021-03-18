@@ -1,5 +1,2 @@
-int *a[932];
-
-int func() {
-        a + 2;
-}
+int a;
+long a;

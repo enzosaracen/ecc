@@ -5,6 +5,7 @@ OBJ	= src/lex.o \
 	  src/ast.o \
 	  src/decl.o \
 	  src/fold.o \
+	  src/amd64.o \
 	  src/main.o
 
 HFILES	= src/u.h \
