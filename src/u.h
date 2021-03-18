@@ -185,6 +185,7 @@ void	compile(void);
  */
 Node	*new(int, Node *, Node *);
 void	freenode(Node *);
+Node	*fold(Node *);
 void	prtree(Node *, int);
 
 /*
@@ -195,11 +196,6 @@ Type	*decl(Node *, Type *, int);
 Type	*parms(Node *);
 void	spec(int);
 Type	*basetype(void);
-
-/*
- *	fold.c
- */
-Node	*fold(Node *);
 
 extern	Src	src;
 extern	FILE	*outfile;
