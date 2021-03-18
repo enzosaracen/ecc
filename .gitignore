@@ -3,3 +3,4 @@ src/y.tab.h
 src/y.tab.c
 ecc
 a.out
+test.c
