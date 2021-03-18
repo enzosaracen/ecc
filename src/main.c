@@ -51,15 +51,12 @@ int main(int argc, char *argv[])
 			*filesp++ = argv[i];
 		}
 	}
-	if(!outname)
-		outname = "a.out";
-	outfile = fopen(outname, "w");
-	if(!outfile)
-		panic("cannot open %s for writing", outname);
 	*filesp = 0;
+	if(outname == NULL)
+		outname = "a.out";
 	for(filesp = files; *filesp; filesp++) {
 		src.fp = fopen(*filesp, "r");
-		if(!src.fp)
+		if(src.fp == NULL)
 			panic("cannot open %s for reading", *filesp);
 		src.name = *filesp;
 		src.line = src.col = 1;

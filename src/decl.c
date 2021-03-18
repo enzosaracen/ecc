@@ -43,17 +43,11 @@ Type *decl(Node *n, Type *t, int c)
 		case OID:
 			s = n->sym;
 			s->type = t;
-			switch(c) {
-			case CNONE:
-				if(s->block == 0)
-					s->class = CGLOBAL;
-				else
-					s->class = CAUTO;
-				break;
-			}
 			s->class = c;
+			goto end;
 		}
 	}
+end:
 	return t;
 }
 
