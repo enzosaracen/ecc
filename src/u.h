@@ -6,6 +6,7 @@
 
 typedef struct Src Src;
 typedef struct Sym Sym;
+typedef struct Dstk Dstk;
 typedef struct Type Type;
 typedef struct Node Node;
 
@@ -19,12 +20,36 @@ struct Sym {
 	int		lex;
 	Type		*type;
 	Type		*suetag;
+	Node		*label;
 	char		*name;
-	Sym		*next;
-	unsigned	block;
 	int		class;
-	Node		*init;
 	unsigned	offset;
+	unsigned	block;
+	Sym		*next;
+};
+
+/*
+ * new decls in blocks overwrite syms in the hash table,
+ * but the old sym info is saved on the decl stack, and on
+ * block exit decls from the decl stack are popped and the
+ * syms are restored to their saved values
+ */
+enum {
+	DOTHER,
+	DSUETAG,
+	DLABEL,
+	DBLOCK,		/* dblock marks the beginning of a new sym save,
+			   so when popping off the stack, we stop when we see a dblock */
+};
+
+struct Dstk {
+	Sym		*sym;
+	Type		*type;
+	int		class;
+	int		dtype;
+	Node		*label;
+	unsigned	block;
+	Dstk		*prev;
 };
 
 enum {
@@ -55,7 +80,6 @@ enum {
 	CGLOBAL,
 	CAUTO,
 	CEXTERN,
-	CREGISTER,
 	CSTATIC,
 	CTYPEDEF,
 };
@@ -100,6 +124,7 @@ enum {
 	OID,
 	OIF,
 	OIND,
+	OLABEL,
 	OLE,
 	OLIST,
 	OLSH,
@@ -195,12 +220,16 @@ Type	*decl(Node *, Type *, int, int);
 Type	*parms(Node *);
 void	spec(int);
 Type	*basetype(void);
+void	pushdecl(Sym *, int);
+void	popdecl(void);
 
-extern	Src	src;
-extern	FILE	*outfile;
-extern	int	bits;
-extern	int	lastclass;
-extern	Type	*lasttype;
-extern	int	offset;
-extern	Type	*types[];
-extern	char	*lastname;
+extern	Src		src;
+extern	FILE		*outfile;
+extern	int		bits;
+extern	int		lastclass;
+extern	Type		*lasttype;
+extern	int		offset;
+extern	Type		*types[];
+extern	char		*lastname;
+extern	Dstk		*declstk;
+extern	unsigned	block;

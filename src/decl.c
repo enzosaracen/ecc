@@ -56,6 +56,23 @@ Type *decl(Node *n, Type *t, int c, int setsym)
 	}
 }
 
+void label(Sym *s, Node *n)
+{
+	if(s->label != NULL) {
+		if(s->block == block)
+			errorf("redeclaration of label %s", s->name);
+		pushdecl(s, DLABEL);
+	}
+	s->label = n;
+	s->block = block;
+}
+
+/* 
+ * just for getting type of function, doesnt add parms
+ * to sym table because we dont know it is a def, or maybe
+ * we could always add parms and then we just
+ * popdecl immediately after if it is not a def, but that seems like a waste
+ */
 Type *parms(Node *n)
 {
 	Type *t;
@@ -78,6 +95,58 @@ Type *parms(Node *n)
 	}
 }
 
+void popdecl(void)
+{
+	Dstk *d;
+	Sym *s;
+
+	for(;;)	{
+		d = declstk;
+		declstk = d->prev;
+		switch(d->dtype) {
+		case DBLOCK:
+			block--;
+			free(d);
+			return;
+		case DSUETAG:
+			s = d->sym;
+			s->suetag = d->type;
+			s->block = d->block;
+			free(d);
+			break;
+		case DLABEL:
+			s = d->sym;
+			s->label = d->label;
+			s->block = d->block;
+			free(d);
+			break;
+		case DOTHER:
+			s = d->sym;
+			s->type = d->type;
+			s->class = d->class;
+			s->block = d->block;
+			free(d);
+			break;
+		default:
+			errorf("bad decl stack type...");
+		}
+	}
+}
+
+void pushdecl(Sym *s, int dtype)
+{
+	Dstk *d;
+
+	d = emalloc(sizeof(Dstk));
+	d->sym = s;
+	d->dtype = dtype;
+	d->type = s->type;
+	d->class = s->class;
+	d->prev = declstk;
+	d->block = s->block;
+	declstk = d;
+}
+
 void spec(int b)
 {
 	switch(b) {
@@ -90,7 +159,7 @@ void spec(int b)
 		b = CEXTERN;
 		goto class;
 	case BREGISTER:
-		b = CREGISTER;
+		b = CAUTO;
 		goto class;
 	case BSTATIC:
 		b = CSTATIC;

@@ -2,13 +2,15 @@
 
 #define MAX 32
 
-Src	src;
-FILE	*outfile;
-int	bits;
-int	lastclass;
-Type	*lasttype;
-int	offset;
-char	*lastname;
+Src		src;
+FILE		*outfile;
+int		bits;
+int		lastclass;
+Type		*lasttype;
+int		offset;
+char		*lastname;
+Dstk		*declstk;
+unsigned	block;
 
 int main(int argc, char *argv[])
 {

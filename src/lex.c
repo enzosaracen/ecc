@@ -93,10 +93,9 @@ Sym *lookup(void)
 	s->next = hash[h];
 	hash[h] = s;
 	s->type = NULL;
+	s->label = NULL;
 	s->suetag = NULL;
-	s->block = 0;
 	s->class = CNONE;
-	s->init = NULL;
 	s->offset = 0;
 	s->lex = LID;
 	return s;
@@ -123,7 +122,6 @@ char next(void)
 	return c;
 }
 
-/* kind of slow to do this, so might change */
 void putbuf(char *cp, char c)
 {
 	if(cp-lbuf >= NLBUF-1)

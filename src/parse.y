@@ -10,7 +10,7 @@
 }
 
 %type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel idlist stmt 
-%type	<node>	id ilist init dlist decor ddecor oadecor adecor dadecor parms fndef
+%type	<node>	id ilist init dlist decor ddecor oadecor adecor dadecor parms fndef label
 %type	<type>	tspec
 
 %token	<sym>	LID LTYPE
@@ -40,9 +40,6 @@ prog:
 
 xdecl:
 	fndef
-	{
-		freenode($1);
-	}
 |	decl
 
 fndef:
@@ -319,11 +316,22 @@ stmt:
 
 label:
 	id ':' stmt
+	{
+		label($1, $3);
+		$$ = $3;
+	}
 |	LCASE expr ':' stmt
 |	LDEFAULT ':' stmt
 
 block:
-	'{' slist '}'
+	'{'
+	{
+		pushdecl(NULL, DBLOCK);
+	}
+	slist '}'
+	{
+		popdecl();
+	}
 
 slist:
 |	slist decl
