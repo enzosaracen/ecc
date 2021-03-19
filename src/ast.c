@@ -144,6 +144,7 @@ ret:
 
 char *op2str(int op)
 {
+	/* need to update this occasionally */
 	switch(op) {
 	case OADD:	return "+";
 	case OADDAS:	return "+=";
@@ -154,6 +155,7 @@ char *op2str(int op)
 	case OARRAY:	return "[]";
 	case OARROW:	return "->";
 	case OAS:	return "=";
+	case OBIT:	return ":";
 	case OBNOT:	return "~";
 	case OBREAK:	return "break";
 	case OCAST:	return "(cast)";
@@ -165,6 +167,7 @@ char *op2str(int op)
 	case ODIVAS:	return "/=";
 	case ODOT:	return ".";
 	case ODOWHILE:	return "do while";
+	case OELLIPSIS:	return "...";
 	case OEQ:	return "==";
 	case OFOR:	return "for";
 	case OFUNC:	return "function";
@@ -189,6 +192,7 @@ char *op2str(int op)
 	case OOR:	return "|";
 	case OORAS:	return "|=";
 	case OOROR:	return "||";
+	case OPARM:	return "param";
 	case OPOS:	return "+";
 	case OPOSTDEC:	return "(post)--";
 	case OPOSTINC:	return "(post)++";

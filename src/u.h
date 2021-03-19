@@ -124,7 +124,6 @@ enum {
 	OID,
 	OIF,
 	OIND,
-	OLABEL,
 	OLE,
 	OLIST,
 	OLSH,
@@ -218,6 +217,7 @@ void	prtree(Node *, int);
 Type	*type(int, Type *);
 Type	*decl(Node *, Type *, int, int);
 Type	*parms(Node *);
+void	label(Sym *, Node *);
 void	spec(int);
 Type	*basetype(void);
 void	pushdecl(Sym *, int);

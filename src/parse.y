@@ -315,7 +315,7 @@ stmt:
 |	jmp
 
 label:
-	id ':' stmt
+	LID ':' stmt
 	{
 		label($1, $3);
 		$$ = $3;

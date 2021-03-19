@@ -33,6 +33,7 @@ Type *decl(Node *n, Type *t, int c, int setsym)
 					errorf("array size must be positive");
 				t->width = n2->lval * t->sub->width;
 				freenode(n2);
+				n->r = NULL;
 			}
 			n = n->l;
 			break;
