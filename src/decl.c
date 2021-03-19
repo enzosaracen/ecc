@@ -139,12 +139,14 @@ void pushdecl(Sym *s, int dtype)
 	Dstk *d;
 
 	d = emalloc(sizeof(Dstk));
-	d->sym = s;
 	d->dtype = dtype;
-	d->type = s->type;
-	d->class = s->class;
 	d->prev = declstk;
-	d->block = s->block;
+	if(s != NULL) {
+		d->sym = s;
+		d->type = s->type;
+		d->class = s->class;
+		d->block = s->block;
+	}
 	declstk = d;
 }
 
