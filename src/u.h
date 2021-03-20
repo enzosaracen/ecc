@@ -166,7 +166,6 @@ struct Node {
 	Type	*type;
 	long	lval;
 	char	*sval;
-	int	class;
 };
 
 enum {
@@ -226,6 +225,8 @@ void	push(Sym *, int);
 void	pop(void);
 void	spec(int);
 Type	*btype(void);
+char	*type2str(int);
+void	prtype(Type *t, int);
 
 extern	Src		src;
 extern	FILE		*outfile;

@@ -126,8 +126,6 @@ Type *ptype(Node *n)
 		return NULL;
 	switch(n->op) {
 	case OPARM:
-		if(n->class != CNONE)
-			errorf("parameter declaration cannot have storage class");
 		if(n->l == NULL)
 			return n->type;
 		t = decl(n->l, n->type, CNONE, 0);
@@ -289,4 +287,53 @@ Type *btype(void)
 	}
 	bits = 0;
 	return lasttype;
+}
+
+char *type2str(int ttype)
+{
+	switch(ttype) {
+	case TVOID:	return "void";
+	case TCHAR:	return "char";
+	case TUCHAR:	return "uchar";
+	case TSHORT:	return "short";
+	case TUSHORT:	return "ushort";
+	case TINT:	return "int";
+	case TUINT:	return "uint";
+	case TLONG:	return "long";
+	case TLLONG:	return "llong";
+	case TULLONG:	return "ullong";
+	case TFLOAT:	return "float";
+	case TDOUBLE:	return "double";
+	case TLDOUBLE:	return "ldouble";
+	case TPTR:	return "ptr";
+	case TARRAY:	return "array";
+	case TENUM:	return "enum";
+	case TFUNC:	return "func";
+	case TSTRUCT:	return "struct";
+	case TUNION:	return "union";
+	default:
+		errorf("unrecognized ttype %d when printing type", ttype);
+	}
+}
+
+void prtype(Type *t, int indent)
+{
+	int i;
+
+	if(t == NULL)
+		return;
+	for(i = 0; i < indent; i++)
+		printf("  ");
+	switch(t->ttype) {
+	case TFUNC:
+		printf("%s\n", type2str(t->ttype));
+		prtype(t->sub, indent);
+		prtype(t->list, indent+1);
+		break;
+	default:
+		printf("%s\n", type2str(t->ttype));
+		prtype(t->sub, indent+1);
+		prtype(t->list, indent);
+		break;
+	}
 }

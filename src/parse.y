@@ -46,6 +46,7 @@ xdecl:
 			errorf("expected function type");
 		push(NULL, DBLOCK);
 		pdecl($2, lasttype);
+		prtype(lasttype, 0);
 		freenode($2);
 	}
 	'{' slist '}'
@@ -53,6 +54,7 @@ xdecl:
 		pop();
 	}
 |	decl
+|	';'
 
 decl:
 	tspec ';'
@@ -115,13 +117,15 @@ parms:
 	{
 		$$ = new(OPARM, $2, NULL);
 		$$->type = $1;
-		$$->class = lastclass;
+		if(lastclass != CNONE)
+			errorf("parameter declaration cannot have storage class");
 	}
 |	tspec decor
 	{
 		$$ = new(OPARM, $2, NULL);
 		$$->type = $1;
-		$$->class = lastclass;
+		if(lastclass != CNONE)
+			errorf("parameter declaration cannot have storage class");
 	}
 |	parms ',' parms
 	{
