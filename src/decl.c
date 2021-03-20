@@ -56,12 +56,24 @@ Type *decl(Node *n, Type *t, int c, int setsym)
 
 void idecl(Sym *s, Type *t, int c)
 {
-	if(s->type != NULL) {
-		if(s->block == block)
-			errorf("redeclaration of %s", s->name);
-		else
-			push(s, DOTHER);
-	}
+	if(block == 0)
+		switch(c) {
+		case CNONE:
+			c = CGLOBAL;
+			break;
+		case CAUTO:
+			errorf("auto declaration of %s not allowed at global scope", s->name);
+			break;
+		}
+	else
+		if(s->type != NULL) {
+			if(s->block == block)
+				errorf("redeclaration of %s", s->name);
+			else
+				push(s, DOTHER);
+		}
+	if(t->ttype == TVOID)
+		errorf("incomplete type in declaration");
 	s->type = t;
 	s->class = c;
 	s->block = block;
@@ -97,7 +109,7 @@ void pdecl(Node *n, Type *t)
 		pdecl(n->r, t->list);
 		return;
 	case OFUNC:
-		pdecl(n->r, t);
+		pdecl(n->r, t->list);
 		return;
 	case OELLIPSIS:
 		/* ignore for now */

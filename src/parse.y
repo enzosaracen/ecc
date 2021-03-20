@@ -10,7 +10,7 @@
 }
 
 %type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel idlist stmt 
-%type	<node>	id ilist init dlist decor ddecor oadecor adecor dadecor parms fndef label
+%type	<node>	id ilist init dlist decor ddecor oadecor adecor dadecor parms label
 %type	<type>	tspec
 
 %token	<sym>	LID LTYPE
@@ -44,21 +44,15 @@ xdecl:
 		decl($2, lasttype, lastclass, 1);
 		if(lasttype->ttype != TFUNC)
 			errorf("expected function type");
+		push(NULL, DBLOCK);
 		pdecl($2, lasttype);
 		freenode($2);
 	}
-	'{'
-	{
-		push(NULL, DBLOCK);
-	}
-	slist '}'
+	'{' slist '}'
 	{
 		pop();
 	}
 |	decl
-
-fnspec:
-	tspec decor dlist
 
 decl:
 	tspec ';'

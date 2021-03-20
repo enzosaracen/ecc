@@ -77,10 +77,10 @@ enum {
 
 enum {
 	CNONE,
-	CGLOBAL,
 	CAUTO,
 	CEXTERN,
 	CSTATIC,
+	CGLOBAL,
 	CTYPEDEF,
 };
 
