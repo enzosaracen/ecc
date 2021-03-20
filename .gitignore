@@ -4,3 +4,4 @@ src/y.tab.c
 ecc
 a.out
 test.c
+y.output
