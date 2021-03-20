@@ -126,9 +126,19 @@ Type *ptype(Node *n)
 		return NULL;
 	switch(n->op) {
 	case OPARM:
+		if(n->class != CNONE)
+			errorf("parameter declaration cannot have storage class");
 		if(n->l == NULL)
 			return n->type;
 		t = decl(n->l, n->type, CNONE, 0);
+		switch(t->ttype) {
+		case TFUNC:
+			t = type(TPTR, t);
+			break;
+		case TARRAY:
+			t = type(TPTR, t->sub);
+			break;
+		}
 		return t;
 	case OLIST:
 		t = ptype(n->l);
@@ -230,40 +240,53 @@ Type *btype(void)
 {
 	switch(bits) {
 	case BVOID:
-		return types[TVOID];
+		lasttype = types[TVOID];
+		break;
 	case BCHAR:
 	case BCHAR|BSIGNED:
-		return types[TCHAR];
+		lasttype = types[TCHAR];
+		break;
 	case BCHAR|BUNSIGNED:
-		return types[TUCHAR];
+		lasttype = types[TUCHAR];
+		break;
 	case BSHORT:
 	case BSHORT|BINT:
 	case BSHORT|BSIGNED:
 	case BSHORT|BINT|BSIGNED:
-		return types[TSHORT];
+		lasttype = types[TSHORT];
+		break;
 	case BSHORT|BUNSIGNED:
 	case BSHORT|BUNSIGNED|BINT:
-		return types[TUSHORT];
+		lasttype = types[TUSHORT];
+		break;
 	case 0:
 	case BINT:
 	case BSIGNED:
 	case BINT|BSIGNED:
-		return types[TINT];
+		lasttype = types[TINT];
+		break;
 	case BUNSIGNED:
 	case BINT|BUNSIGNED:
-		return types[TUINT];
+		lasttype = types[TUINT];
+		break;
 	case BLONG:
 	case BLONG|BINT:
 	case BLONG|BSIGNED:
 	case BLONG|BINT|BSIGNED:
-		return types[TLONG];
+		lasttype = types[TLONG];
+		break;
 	case BFLOAT:
-		return types[TFLOAT];
+		lasttype = types[TFLOAT];
+		break;
 	case BDOUBLE:
-		return types[TDOUBLE];
+		lasttype = types[TDOUBLE];
+		break;
 	case BDOUBLE|BLONG:
-		return types[TLDOUBLE];
+		lasttype = types[TLDOUBLE];
+		break;
 	default:
 		errorf("illegal combination of types");
 	}
+	bits = 0;
+	return lasttype;
 }

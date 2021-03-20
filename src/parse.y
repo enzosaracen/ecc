@@ -98,6 +98,7 @@ ddecor:
 	}
 |	ddecor '[' oexpr ']'
 	{
+	
 		$$ = new(OARRAY, $1, $3);
 	}
 |	ddecor '(' parms ')'
@@ -114,11 +115,13 @@ parms:
 	{
 		$$ = new(OPARM, $2, NULL);
 		$$->type = $1;
+		$$->class = lastclass;
 	}
 |	tspec decor
 	{
 		$$ = new(OPARM, $2, NULL);
 		$$->type = $1;
+		$$->class = lastclass;
 	}
 |	parms ',' parms
 	{
@@ -179,8 +182,6 @@ tspec:
 	qctlist
 	{
 		$$ = btype();
-		bits = 0;
-		lasttype = $$;
 	}
 |	suespec
 	{

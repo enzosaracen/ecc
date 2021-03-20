@@ -166,6 +166,7 @@ struct Node {
 	Type	*type;
 	long	lval;
 	char	*sval;
+	int	class;
 };
 
 enum {
