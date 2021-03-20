@@ -39,14 +39,26 @@ prog:
 |	prog xdecl
 
 xdecl:
-	fndef
+	tspec decor
+	{
+		decl($2, lasttype, lastclass, 1);
+		if(lasttype->ttype != TFUNC)
+			errorf("expected function type");
+		pdecl($2, lasttype);
+		freenode($2);
+	}
+	'{'
+	{
+		push(NULL, DBLOCK);
+	}
+	slist '}'
+	{
+		pop();
+	}
 |	decl
 
-fndef:
-	decor block
-|	tspec decor block
-|	decor dlist block
-|	tspec decor dlist block
+fnspec:
+	tspec decor dlist
 
 decl:
 	tspec ';'
@@ -120,7 +132,7 @@ parms:
 	}
 |	parms ',' '.' '.' '.'
 	{
-		$$ = new(OELLIPSIS, NULL, NULL);
+		$$ = new(OELLIPSIS, $1, NULL);
 	}
 
 idlist:
@@ -172,7 +184,7 @@ dadecor:
 tspec:
 	qctlist
 	{
-		$$ = basetype();
+		$$ = btype();
 		bits = 0;
 		lasttype = $$;
 	}
@@ -313,25 +325,23 @@ stmt:
 |	sel
 |	iter
 |	jmp
+|	'{'
+	{
+		push(NULL, DBLOCK);
+	}
+	slist '}'
+	{
+		pop();
+	}
 
 label:
 	LID ':' stmt
 	{
-		label($1, $3);
+		ldecl($1, $3);
 		$$ = $3;
 	}
 |	LCASE expr ':' stmt
 |	LDEFAULT ':' stmt
-
-block:
-	'{'
-	{
-		pushdecl(NULL, DBLOCK);
-	}
-	slist '}'
-	{
-		popdecl();
-	}
 
 slist:
 |	slist decl

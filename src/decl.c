@@ -16,7 +16,6 @@ Type *type(int ttype, Type *sub)
 Type *decl(Node *n, Type *t, int c, int setsym)
 {
 	Node *n2;
-	Sym *s;
 
 	for(;;) {
 		if(n == NULL)
@@ -43,38 +42,71 @@ Type *decl(Node *n, Type *t, int c, int setsym)
 			break;
 		case OFUNC:
 			t = type(TFUNC, t);
-			t->list = parms(n->r);
+			t->list = ptype(n->r);
 			n = n->l;
 			break;
 		case OID:
-			if(!setsym)
-				return t;
-			s = n->sym;
-			s->type = t;
-			s->class = c;
+			if(setsym)
+				idecl(n->sym, t, c);
+			lasttype = t;
 			return t;
 		}
 	}
 }
 
-void label(Sym *s, Node *n)
+void idecl(Sym *s, Type *t, int c)
+{
+	if(s->type != NULL) {
+		if(s->block == block)
+			errorf("redeclaration of %s", s->name);
+		else
+			push(s, DOTHER);
+	}
+	s->type = t;
+	s->class = c;
+	s->block = block;
+}
+
+void ldecl(Sym *s, Node *n)
 {
 	if(s->label != NULL) {
 		if(s->block == block)
 			errorf("redeclaration of label %s", s->name);
-		pushdecl(s, DLABEL);
+		push(s, DLABEL);
 	}
 	s->label = n;
 	s->block = block;
 }
 
-/* 
- * just for getting type of function, doesnt add parms
- * to sym table because we dont know it is a def, or maybe
- * we could always add parms and then we just
- * popdecl immediately after if it is not a def, but that seems like a waste
- */
-Type *parms(Node *n)
+void pdecl(Node *n, Type *t)
+{
+	if(n == NULL)
+		return;
+	switch(n->op) {
+	case OPARM:
+		/* type already stored in t, so we just need to dig until we find id */	
+		while(n->op != OID) {
+			n = n->l;
+			if(n == NULL)
+				errorf("parameter name needed in function definition");
+		}
+		idecl(n->sym, t, CAUTO);
+		return;
+	case OLIST:
+		pdecl(n->l, t);
+		pdecl(n->r, t->list);
+		return;
+	case OFUNC:
+		pdecl(n->r, t);
+		return;
+	case OELLIPSIS:
+		/* ignore for now */
+		pdecl(n->l, t);
+		return;
+	}
+}
+
+Type *ptype(Node *n)
 {
 	Type *t;
 
@@ -87,16 +119,34 @@ Type *parms(Node *n)
 		t = decl(n->l, n->type, CNONE, 0);
 		return t;
 	case OLIST:
-		t = parms(n->l);
-		t->list = parms(n->r);
+		t = ptype(n->l);
+		t->list = ptype(n->r);
 		return t;
 	case OELLIPSIS:
 		/* ignore for now  */
-		return parms(n->l);
+		return ptype(n->l);
 	}
 }
 
-void popdecl(void)
+void push(Sym *s, int dtype)
+{
+	Dstk *d;
+
+	d = emalloc(sizeof(Dstk));
+	d->dtype = dtype;
+	d->prev = declstk;
+	if(dtype == DBLOCK)
+		block++;
+	else {
+		d->sym = s;
+		d->type = s->type;
+		d->class = s->class;
+		d->block = s->block;
+	}
+	declstk = d;
+}
+
+void pop(void)
 {
 	Dstk *d;
 	Sym *s;
@@ -128,26 +178,8 @@ void popdecl(void)
 			s->block = d->block;
 			free(d);
 			break;
-		default:
-			errorf("bad decl stack type...");
 		}
 	}
-}
-
-void pushdecl(Sym *s, int dtype)
-{
-	Dstk *d;
-
-	d = emalloc(sizeof(Dstk));
-	d->dtype = dtype;
-	d->prev = declstk;
-	if(s != NULL) {
-		d->sym = s;
-		d->type = s->type;
-		d->class = s->class;
-		d->block = s->block;
-	}
-	declstk = d;
 }
 
 void spec(int b)
@@ -182,7 +214,7 @@ class:
 	lastclass = b;
 }
 
-Type *basetype(void)
+Type *btype(void)
 {
 	switch(bits) {
 	case BVOID:

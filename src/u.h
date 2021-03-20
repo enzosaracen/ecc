@@ -209,6 +209,7 @@ void	compile(void);
 Node	*new(int, Node *, Node *);
 void	freenode(Node *);
 Node	*fold(Node *);
+char	*op2str(int);
 void	prtree(Node *, int);
 
 /*
@@ -216,12 +217,14 @@ void	prtree(Node *, int);
  */
 Type	*type(int, Type *);
 Type	*decl(Node *, Type *, int, int);
-Type	*parms(Node *);
-void	label(Sym *, Node *);
+void	idecl(Sym *s, Type *t, int c);
+void	ldecl(Sym *, Node *);
+void	pdecl(Node *, Type *);
+Type	*ptype(Node *);
+void	push(Sym *, int);
+void	pop(void);
 void	spec(int);
-Type	*basetype(void);
-void	pushdecl(Sym *, int);
-void	popdecl(void);
+Type	*btype(void);
 
 extern	Src		src;
 extern	FILE		*outfile;
