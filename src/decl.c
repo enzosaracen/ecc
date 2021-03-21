@@ -93,13 +93,11 @@ void idecl(Sym *s, Type *t, int c)
 		}
 		if(s->type != NULL && !sametype(s->type, t))
 			errorf("conflicting types for %s", s->name);
-	} else
-		if(s->type != NULL) {
-			if(s->block == block)
-				errorf("auto redeclaration of %s", s->name);
-			else
-				push(s, DOTHER);
-		}
+	} else {
+		if(s->block == block)
+			errorf("auto redeclaration of %s", s->name);
+		push(s, DOTHER);
+	}
 	if(t->ttype == TVOID)
 		errorf("incomplete type in declaration");
 	s->type = t;
@@ -127,9 +125,14 @@ void pdecl(Node *n, Type *t)
 		/* type already stored in t, so we just need to dig until we find id */	
 		while(n->op != OID) {
 			n = n->l;
-			if(n == NULL)
+			if(n == NULL) {
+				if(t->ttype == TVOID)
+					return;
 				errorf("parameter name needed in function definition");
+			}
 		}
+		if(t->ttype == TVOID)
+			errorf("parameter %s has incomplete type", n->sym->name);
 		idecl(n->sym, t, CAUTO);
 		return;
 	case OLIST:

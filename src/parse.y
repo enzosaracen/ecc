@@ -11,7 +11,7 @@
 
 %type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel idlist stmt 
 %type	<node>	id ilist init dlist decor ddecor oadecor adecor dadecor parms label slist decl
-%type	<type>	suespec tspec
+%type	<type>	suespec tspec otspec
 
 %token	<sym>	LID LTYPE
 %token	<sval>	LSTRING
@@ -194,6 +194,11 @@ dadecor:
 	}
 
 otspec:
+      	{
+      		$$ = types[TINT];
+		lastclass = CNONE;
+		lasttype = $$;
+	}
 |	tspec
 
 tspec:
