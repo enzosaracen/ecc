@@ -11,7 +11,7 @@
 
 %type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel idlist stmt 
 %type	<node>	id ilist init dlist decor ddecor oadecor adecor dadecor parms label slist decl
-%type	<type>	tspec suespec otspec
+%type	<type>	suespec tspec
 
 %token	<sym>	LID LTYPE
 %token	<sval>	LSTRING
@@ -22,7 +22,7 @@
 %token	LWHILE LDO LFOR LGOTO LCONTINUE LBREAK LRETURN LAUTO LREGISTER LEXTERN LSTATIC LTYPEDEF LCONST LVOLATILE
 
 %left	','
-%right	'=' LADDAS LSUBAS LMULAS LDIVAS LMODAS LLSHE LRSHE LANDE LXORE LORE
+%right	'=' LADDAS LSUBAS LMULAS LDIVAS LMODAS LLSHAS LRSHAS LANDAS LXORAS LORAS
 %right	'?' ':'
 %left	LOROR
 %left	LANDAND
@@ -52,7 +52,8 @@ xdecl:
 	{
 		pop();
 	}
-|	decl
+|	otspec ';'
+|	otspec dlist ';'
 
 decl:
 	tspec ';'
@@ -103,7 +104,7 @@ decor:
 	}
 
 ddecor:
-      	id
+	id	
 |	'(' decor ')'
 	{
 		$$ = $2;
@@ -123,12 +124,7 @@ ddecor:
 	}
 
 parms:
-	id
-	{
-		$$ = new(OPARM, $1, NULL);
-		$$->type = types[TINT];
-	}
-|	tspec oadecor
+	tspec oadecor
 	{
 		$$ = new(OPARM, $2, NULL);
 		$$->type = $1;
@@ -198,11 +194,6 @@ dadecor:
 	}
 
 otspec:
-      	{
-		lasttype = types[TINT];
-		lastclass = CNONE;
-		$$ = lasttype;
-	}
 |	tspec
 
 tspec:
@@ -217,21 +208,6 @@ tspec:
 |	LTYPE
 	{
 		$$ = $1->type;
-		lasttype = $$;
-	}
-|	qclist LTYPE
-	{
-		$$ = $2->type;
-		lasttype = $$;
-	}
-|	LTYPE qclist
-	{
-		$$ = $1->type;
-		lasttype = $$;
-	}
-|	qclist LTYPE qclist
-	{
-		$$ = $2->type;
 		lasttype = $$;
 	}
 
@@ -279,18 +255,13 @@ enumlist:
 |	enumlist ','
 
 qctlist:
-	cname
-|	tname
-|	qname
-|	cname qctlist
-|	tname qctlist
-|	qname qctlist
+	qctname
+|	qctname qctlist
 
-qclist:
+qctname:
 	qname
 |	cname
-|	qname qclist
-|	cname qclist
+|	tname
 
 qlist:
 |	qname qlist
