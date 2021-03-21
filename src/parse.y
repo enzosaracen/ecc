@@ -11,7 +11,7 @@
 
 %type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel idlist stmt 
 %type	<node>	id ilist init dlist decor ddecor oadecor adecor dadecor parms label slist decl
-%type	<type>	tspec suespec
+%type	<type>	tspec suespec otspec
 
 %token	<sym>	LID LTYPE
 %token	<sval>	LSTRING
@@ -39,14 +39,13 @@ prog:
 |	prog xdecl
 
 xdecl:
-	tspec decor
+	otspec decor
 	{
 		decl($2, lasttype, lastclass, 1);
 		if(lasttype->ttype != TFUNC)
 			errorf("expected function type");
 		push(NULL, DBLOCK);
 		pdecl($2, lasttype);
-		prtype(lasttype, 0);
 		freenode($2);
 	}
 	'{' slist '}'
@@ -124,7 +123,12 @@ ddecor:
 	}
 
 parms:
-	tspec oadecor
+	id
+	{
+		$$ = new(OPARM, $1, NULL);
+		$$->type = types[TINT];
+	}
+|	tspec oadecor
 	{
 		$$ = new(OPARM, $2, NULL);
 		$$->type = $1;
@@ -192,6 +196,14 @@ dadecor:
 	{
 		$$ = new(OFUNC, $1, $3);
 	}
+
+otspec:
+      	{
+		lasttype = types[TINT];
+		lastclass = CNONE;
+		$$ = lasttype;
+	}
+|	tspec
 
 tspec:
      	qctlist
@@ -568,7 +580,6 @@ cast:
 		$$ = new(OCAST, $4, NULL);
 		$$->type = lasttype;
 	}
-
 uexpr:
 	pexpr
 |	LINC uexpr

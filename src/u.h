@@ -216,8 +216,9 @@ void	prtree(Node *, int);
  * 	decl.c
  */
 Type	*type(int, Type *);
+int	sametype(Type *, Type *);
 Type	*decl(Node *, Type *, int, int);
-void	idecl(Sym *s, Type *t, int c);
+void	idecl(Sym *, Type *, int );
 void	ldecl(Sym *, Node *);
 void	pdecl(Node *, Type *);
 Type	*ptype(Node *);
@@ -226,7 +227,7 @@ void	pop(void);
 void	spec(int);
 Type	*btype(void);
 char	*type2str(int);
-void	prtype(Type *t, int);
+void	prtype(Type *, int);
 
 extern	Src		src;
 extern	FILE		*outfile;

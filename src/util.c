@@ -2,23 +2,23 @@
 
 void *emalloc(int n)
 {
-	char *v;
+	char *p;
 
-	v = malloc(n);
-	if(v == NULL)
+	p = malloc(n);
+	if(p == NULL)
 		panic("out of memory");
-	return v;
+	return p;
 }
 
 char *estrdup(char *s)
 {
-	char *d;
+	char *r;
 	int len;
 
 	len = strlen(s);
-	d = emalloc(len+1);
-	strncpy(d, s, len);
-	return d;
+	r = emalloc(len+1);
+	strncpy(r, s, len);
+	return r;
 }
 
 void panic(char *fmt, ...)

@@ -13,6 +13,32 @@ Type *type(int ttype, Type *sub)
 	return t;
 }
 
+int sametype(Type *t, Type *t2)
+{
+	if(t == t2)
+		return 1;
+	if(t->ttype == t2->ttype) {
+		switch(t->ttype) {
+		case TFUNC:
+			if(!sametype(t->sub, t2->sub))
+				return 0;
+			while(t->list != NULL && t2->list != NULL) {
+				if(!sametype(t->list, t2->list))
+					return 0;
+				t = t->list;
+				t2 = t2->list;
+			}
+			return 1;
+		case TPTR:
+		case TARRAY:
+			return sametype(t->sub, t2->sub);
+		default:
+			return 1;
+		}
+	}
+	return 0;
+}
+
 Type *decl(Node *n, Type *t, int c, int setsym)
 {
 	Node *n2;
@@ -56,7 +82,7 @@ Type *decl(Node *n, Type *t, int c, int setsym)
 
 void idecl(Sym *s, Type *t, int c)
 {
-	if(block == 0)
+	if(block == 0) {
 		switch(c) {
 		case CNONE:
 			c = CGLOBAL;
@@ -65,10 +91,12 @@ void idecl(Sym *s, Type *t, int c)
 			errorf("auto declaration of %s not allowed at global scope", s->name);
 			break;
 		}
-	else
+		if(s->type != NULL && !sametype(s->type, t))
+			errorf("conflicting types for %s", s->name);
+	} else
 		if(s->type != NULL) {
 			if(s->block == block)
-				errorf("redeclaration of %s", s->name);
+				errorf("auto redeclaration of %s", s->name);
 			else
 				push(s, DOTHER);
 		}
@@ -126,8 +154,11 @@ Type *ptype(Node *n)
 		return NULL;
 	switch(n->op) {
 	case OPARM:
-		if(n->l == NULL)
+		if(n->l == NULL) {
+			if(n->type == TVOID)
+				return NULL;
 			return n->type;
+		}
 		t = decl(n->l, n->type, CNONE, 0);
 		switch(t->ttype) {
 		case TFUNC:
@@ -140,7 +171,11 @@ Type *ptype(Node *n)
 		return t;
 	case OLIST:
 		t = ptype(n->l);
+		if(t == NULL)
+			goto err;
 		t->list = ptype(n->r);
+		if(t->list == NULL)
+err:			errorf("void must be the only parameter");
 		return t;
 	case OELLIPSIS:
 		/* ignore for now  */
