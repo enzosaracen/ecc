@@ -94,7 +94,7 @@ Sym *lookup(void)
 	hash[h] = s;
 	s->type = NULL;
 	s->label = NULL;
-	s->suetag = NULL;
+	s->tag = NULL;
 	s->class = CNONE;
 	s->offset = 0;
 	s->lex = LID;

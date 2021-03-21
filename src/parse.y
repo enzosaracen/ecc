@@ -9,9 +9,11 @@
 	 long	lval;
 }
 
-%type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel idlist stmt 
+%type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel idlist stmt
 %type	<node>	id ilist init dlist decor ddecor oadecor adecor dadecor parms label slist decl
+%type	<node>	sudecor sudecorlist sudecl sudecllist subody
 %type	<type>	suespec tspec otspec
+%type	<sym>	tag
 
 %token	<sym>	LID LTYPE
 %token	<sval>	LSTRING
@@ -126,17 +128,17 @@ ddecor:
 parms:
 	tspec oadecor
 	{
-		$$ = new(OPARM, $2, NULL);
-		$$->type = $1;
 		if(lastclass != CNONE)
 			errorf("parameter declaration cannot have storage class");
+		$$ = new(OPARM, $2, NULL);
+		$$->type = $1;
 	}
 |	tspec decor
 	{
-		$$ = new(OPARM, $2, NULL);
-		$$->type = $1;
 		if(lastclass != CNONE)
 			errorf("parameter declaration cannot have storage class");
+		$$ = new(OPARM, $2, NULL);
+		$$->type = $1;
 	}
 |	parms ',' parms
 	{
@@ -218,8 +220,21 @@ tspec:
 
 suespec:
 	LSTRUCT tag
+	{
+		$$ = type(TSTRUCT, NULL);
+		$2->tag = $$;
+	}
 |	LSTRUCT	tag subody
+	{
+		$$ = type(TSTRUCT, NULL);
+		$2->tag = $$;
+		sdecl($3, $$);
+	}
 |	LSTRUCT	subody
+	{
+		$$ = type(TSTRUCT, NULL);
+		sdecl($2, $$);
+	}
 |	LUNION tag
 |	LUNION tag subody 
 |	LUNION subody
@@ -229,26 +244,40 @@ suespec:
 
 subody:
 	'{' sudecllist '}'
+	{
+		$$ = $2;
+	}
 
 sudecllist:
 	sudecl
 |	sudecllist sudecl
+	{
+		$$ = new(OLIST, $1, $2);
+	}
 
 sudecl:
-	tspec
+	tspec sudecorlist ';'
 	{
+
 		if(lastclass != CNONE)
-			errorf("structure elements cannot have storage classes");
+			errorf("structure members cannot have storage classes");
+		$$ = new(OMEMB, $2, NULL);
+		$$->type = $1;
 	}
-	sudecorlist ';'
 
 sudecor:
 	decor
 |	decor ':' expr
+	{
+		$$ = new(OBIT, $1, $3);
+	}
 
 sudecorlist:
-|	sudecor
+	sudecor
 |	sudecorlist ',' sudecor
+	{
+		$$ = new(OLIST, $1, $3);
+	}
 
 enumbody:
 	'{' enumlist '}'

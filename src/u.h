@@ -19,7 +19,7 @@ struct Src {
 struct Sym {
 	int		lex;
 	Type		*type;
-	Type		*suetag;
+	Type		*tag;
 	Node		*label;
 	char		*name;
 	int		class;
@@ -36,7 +36,7 @@ struct Sym {
  */
 enum {
 	DOTHER,
-	DSUETAG,
+	DTAG,
 	DLABEL,
 	DBLOCK,
 };
@@ -128,6 +128,7 @@ enum {
 	OLSH,
 	OLSHAS,
 	OLT,
+	OMEMB,
 	OMOD,
 	OMODAS,
 	OMUL,
@@ -184,6 +185,12 @@ enum {
 	BTYPEDEF	= 1<<13,
 };
 
+enum {
+	SNONE,
+	SIDECL,
+	STDECL,
+};
+
 /* 
  *	util.c
  */
@@ -219,12 +226,15 @@ int	sametype(Type *, Type *);
 Type	*decl(Node *, Type *, int, int);
 void	idecl(Sym *, Type *, int );
 void	ldecl(Sym *, Node *);
+void	tdecl(Sym *, Type *);
+void	sdecl(Node *, Type *);
 void	pdecl(Node *, Type *);
 Type	*ptype(Node *);
 void	push(Sym *, int);
 void	pop(void);
 void	spec(int);
 Type	*btype(void);
+int	isincomp(Type *t);
 char	*type2str(int);
 void	prtype(Type *, int);
 

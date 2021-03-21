@@ -39,7 +39,7 @@ int sametype(Type *t, Type *t2)
 	return 0;
 }
 
-Type *decl(Node *n, Type *t, int c, int setsym)
+Type *decl(Node *n, Type *t, int c, int settype)
 {
 	Node *n2;
 
@@ -71,9 +71,19 @@ Type *decl(Node *n, Type *t, int c, int setsym)
 			t->list = ptype(n->r);
 			n = n->l;
 			break;
+		case OBIT:
+			/* ignore for now */
+			n = n->l;
+			break;
 		case OID:
-			if(setsym)
+			switch(settype) {
+			case SIDECL:
 				idecl(n->sym, t, c);
+				break;
+			case STDECL:
+				tdecl(n->sym, t);
+				break;
+			}
 			lasttype = t;
 			return t;
 		}
@@ -98,7 +108,7 @@ void idecl(Sym *s, Type *t, int c)
 			errorf("auto redeclaration of %s", s->name);
 		push(s, DOTHER);
 	}
-	if(t->ttype == TVOID)
+	if(isincomp(t))
 		errorf("incomplete type in declaration");
 	s->type = t;
 	s->class = c;
@@ -116,6 +126,41 @@ void ldecl(Sym *s, Node *n)
 	s->block = block;
 }
 
+void tdecl(Sym *s, Type *t)
+{
+	if(s->tag != NULL) {
+		if(s->block == block)
+			errorf("redefinition of tag %s", s->name);
+		push(s, DTAG);
+	}
+	s->tag = t;
+	s->block = block;
+}
+
+void sdecl(Node *n, Type *t)
+{
+	if(n == NULL)
+		return;
+	switch(n->op) {
+	case OMEMB:
+		n = n->l;
+		while(n != NULL) {
+			if(n->op == OLIST) {
+				decl(n->r, t, CNONE, STDECL);
+				n = n->l;
+			} else {
+				decl(n, t, CNONE, STDECL);
+				break;
+			}
+		}
+		return;
+	case OLIST:
+		sdecl(n->l, t);
+		sdecl(n->r, t->list);
+		return;
+	}
+}
+
 void pdecl(Node *n, Type *t)
 {
 	if(n == NULL)
@@ -131,7 +176,7 @@ void pdecl(Node *n, Type *t)
 				errorf("parameter name needed in function definition");
 			}
 		}
-		if(t->ttype == TVOID)
+		if(isincomp(t))
 			errorf("parameter %s has incomplete type", n->sym->name);
 		idecl(n->sym, t, CAUTO);
 		return;
@@ -217,9 +262,9 @@ void pop(void)
 			block--;
 			free(d);
 			return;
-		case DSUETAG:
+		case DTAG:
 			s = d->sym;
-			s->suetag = d->type;
+			s->tag = d->type;
 			s->block = d->block;
 			free(d);
 			break;
@@ -325,6 +370,12 @@ Type *btype(void)
 	}
 	bits = 0;
 	return lasttype;
+}
+
+int isincomp(Type *t)
+{
+	return t->ttype == TVOID ||
+		(t->ttype == TSTRUCT || t->ttype == TENUM || t->ttype == TUNION) && t->list == NULL;
 }
 
 char *type2str(int ttype)
