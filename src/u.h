@@ -32,14 +32,13 @@ struct Sym {
  * new decls in blocks overwrite syms in the hash table,
  * but the old sym info is saved on the decl stack, and on
  * block exit decls from the decl stack are popped and the
- * syms are restored to their saved values
+ * syms are restored to their previous values
  */
 enum {
 	DOTHER,
 	DSUETAG,
 	DLABEL,
-	DBLOCK,		/* dblock marks the beginning of a new sym save,
-			   so when popping off the stack, we stop when we see a dblock */
+	DBLOCK,
 };
 
 struct Dstk {
