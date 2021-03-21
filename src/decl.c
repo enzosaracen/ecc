@@ -32,6 +32,15 @@ int sametype(Type *t, Type *t2)
 		case TPTR:
 		case TARRAY:
 			return sametype(t->sub, t2->sub);
+		case TUNION:
+		case TSTRUCT:
+			while(t->list != NULL && t2->list != NULL) {
+				if(!sametype(t->list, t2->list))
+					return 0;
+				t = t->list;
+				t2 = t2->list;
+			}
+			return 1;
 		default:
 			return 1;
 		}
@@ -80,8 +89,11 @@ Type *decl(Node *n, Type *t, int c, int settype)
 			case SIDECL:
 				idecl(n->sym, t, c);
 				break;
-			case STDECL:
-				tdecl(n->sym, t);
+			case SMEMB:
+				if(n->sym->suenum == suenum)
+					errorf("duplicate member %s", n->sym->name);
+				n->sym->suenum = suenum;
+				t->sym = n->sym;
 				break;
 			}
 			lasttype = t;
@@ -101,15 +113,15 @@ void idecl(Sym *s, Type *t, int c)
 			errorf("auto declaration of %s not allowed at global scope", s->name);
 			break;
 		}
-		if(s->type != NULL && !sametype(s->type, t))
+		if(s->type != NULL && s->class != c && !sametype(s->type, t))
 			errorf("conflicting types for %s", s->name);
 	} else {
 		if(s->block == block)
 			errorf("auto redeclaration of %s", s->name);
 		push(s, DOTHER);
 	}
-	if(isincomp(t))
-		errorf("incomplete type in declaration");
+	if(c != CTYPEDEF && c != CEXTERN && incomp(t))
+		errorf("storage size of %s not known", s->name);
 	s->type = t;
 	s->class = c;
 	s->block = block;
@@ -128,7 +140,7 @@ void ldecl(Sym *s, Node *n)
 
 void tdecl(Sym *s, Type *t)
 {
-	if(s->tag != NULL) {
+	if(s->tag != NULL && !incomp(t)) {
 		if(s->block == block)
 			errorf("redefinition of tag %s", s->name);
 		push(s, DTAG);
@@ -139,17 +151,21 @@ void tdecl(Sym *s, Type *t)
 
 void sdecl(Node *n, Type *t)
 {
+	Type *base;
+
 	if(n == NULL)
 		return;
 	switch(n->op) {
 	case OMEMB:
+		base = n->type;
 		n = n->l;
 		while(n != NULL) {
 			if(n->op == OLIST) {
-				decl(n->r, t, CNONE, STDECL);
+				t->list = decl(n->r, base, CNONE, SMEMB);
+				t = t->list;
 				n = n->l;
 			} else {
-				decl(n, t, CNONE, STDECL);
+				t->list = decl(n, base, CNONE, SMEMB);
 				break;
 			}
 		}
@@ -176,7 +192,7 @@ void pdecl(Node *n, Type *t)
 				errorf("parameter name needed in function definition");
 			}
 		}
-		if(isincomp(t))
+		if(incomp(t))
 			errorf("parameter %s has incomplete type", n->sym->name);
 		idecl(n->sym, t, CAUTO);
 		return;
@@ -372,7 +388,7 @@ Type *btype(void)
 	return lasttype;
 }
 
-int isincomp(Type *t)
+int incomp(Type *t)
 {
 	return t->ttype == TVOID ||
 		(t->ttype == TSTRUCT || t->ttype == TENUM || t->ttype == TUNION) && t->list == NULL;
@@ -414,6 +430,8 @@ void prtype(Type *t, int indent)
 	for(i = 0; i < indent; i++)
 		printf("  ");
 	switch(t->ttype) {
+	case TSTRUCT:
+	case TUNION:
 	case TFUNC:
 		printf("%s\n", type2str(t->ttype));
 		prtype(t->sub, indent);

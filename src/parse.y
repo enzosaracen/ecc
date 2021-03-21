@@ -43,7 +43,7 @@ prog:
 xdecl:
 	otspec decor
 	{
-		decl($2, lasttype, lastclass, 1);
+		decl($2, lasttype, lastclass, SIDECL);
 		if(lasttype->ttype != TFUNC)
 			errorf("expected function type");
 		push(NULL, DBLOCK);
@@ -55,27 +55,35 @@ xdecl:
 		pop();
 	}
 |	otspec ';'
+	{
+		lastclass = CNONE;
+	}
 |	otspec dlist ';'
+	{
+		lastclass = CNONE;
+	}
 
 decl:
 	tspec ';'
 	{
 		$$ = NULL;
+		lastclass = CNONE;
 	}
 |	tspec dlist ';'
 	{
 		$$ = $2;
+		lastclass = CNONE;
 	}
 
 dlist:
 	decor
 	{
-		decl($1, lasttype, lastclass, 1);
+		decl($1, lasttype, lastclass, SIDECL);
 		freenode($1);
 	}
 |	decor '=' init
 	{
-		decl($1, lasttype, lastclass, 1);
+		decl($1, lasttype, lastclass, SIDECL);
 		freenode($1);
 	}
 |	dlist ',' dlist
@@ -212,9 +220,38 @@ tspec:
 	{
 		lasttype = $$;
 	}
+|	qclist suespec
+	{
+		$$ = $2;
+		lasttype = $$;
+	}
+|	suespec qclist
+	{
+		lasttype = $$;
+	}
+|	qclist suespec qclist
+	{
+		$$ = $2;
+		lasttype = $$;
+	}
 |	LTYPE
 	{
 		$$ = $1->type;
+		lasttype = $$;
+	}
+|	qclist LTYPE
+	{
+		$$ = $2->type;
+		lasttype = $$;
+	}
+|	LTYPE qclist
+	{
+		$$ = $1->type;
+		lasttype = $$;
+	}
+|	qclist LTYPE qclist
+	{
+		$$ = $2->type;
 		lasttype = $$;
 	}
 
@@ -222,16 +259,19 @@ suespec:
 	LSTRUCT tag
 	{
 		$$ = type(TSTRUCT, NULL);
-		$2->tag = $$;
+		tdecl($2, $$);
 	}
 |	LSTRUCT	tag subody
 	{
+		suenum++;
 		$$ = type(TSTRUCT, NULL);
-		$2->tag = $$;
+		tdecl($2, $$);
 		sdecl($3, $$);
+		prtype($$, 0);
 	}
 |	LSTRUCT	subody
 	{
+		suenum++;
 		$$ = type(TSTRUCT, NULL);
 		sdecl($2, $$);
 	}
@@ -287,6 +327,13 @@ enumlist:
 |	id '=' expr
 |	enumlist ',' enumlist
 |	enumlist ','
+
+qclist:
+	qctlist
+	{
+		if(bits != 0)
+			errorf("multiple data types");
+	}
 
 qctlist:
 	qctname

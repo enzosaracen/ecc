@@ -25,6 +25,7 @@ struct Sym {
 	int		class;
 	unsigned	offset;
 	unsigned	block;
+	unsigned	suenum;
 	Sym		*next;
 };
 
@@ -188,7 +189,7 @@ enum {
 enum {
 	SNONE,
 	SIDECL,
-	STDECL,
+	SMEMB,
 };
 
 /* 
@@ -234,7 +235,7 @@ void	push(Sym *, int);
 void	pop(void);
 void	spec(int);
 Type	*btype(void);
-int	isincomp(Type *t);
+int	incomp(Type *t);
 char	*type2str(int);
 void	prtype(Type *, int);
 
@@ -248,3 +249,4 @@ extern	Type		*types[];
 extern	char		*lastname;
 extern	Dstk		*declstk;
 extern	unsigned	block;
+extern	unsigned	suenum;

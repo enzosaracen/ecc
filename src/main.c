@@ -11,6 +11,7 @@ int		offset;
 char		*lastname;
 Dstk		*declstk;
 unsigned	block;
+unsigned	suenum;
 
 int main(int argc, char *argv[])
 {
