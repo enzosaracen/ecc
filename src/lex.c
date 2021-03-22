@@ -93,7 +93,7 @@ Sym *lookup(void)
 	s->nsue = 0;
 	s->block = 0;
 	s->lex = LID;
-	s->mac = NULL:
+	s->mac = NULL;
 	return s;
 }
 
@@ -137,13 +137,14 @@ char next(void)
 		if(io->fp != NULL)
 			io->len = fread(io->buf, 1, BUFSIZ, io->fp);
 		if(io->len == -1) 
-			panic("error reading file %s", io->name);
-		else if(io->len == 0)
+			panic("error reading file %s", src.name);
+		else if(io->len == 0) {
 			if(io->prev != NULL) {
 				popio();
 				return next();
 			} else
 				return EOF;
+		}
 		io->p = io->buf;
 	}
 	c = *io->p++;
@@ -172,6 +173,7 @@ int yylex(void)
 	int c;
 	char c2, *cp;
 
+start:
 	for(c = next(); isspace(c); c = next());
 	if(isdigit(c)) 
 		goto lexnum;

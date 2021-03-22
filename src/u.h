@@ -214,11 +214,19 @@ void	yyerror(char *);
 /*
  *	lex.c
  */
-unsigned	hash(char *);
-void		lexinit(void);
-Sym		*lookup(void);
-int		yylex(void);
-void		compile(void);
+void	lexinit(void);
+Sym	*lookup(void);
+Io	*newio(FILE *, char *, int);
+void	popio(void);
+void	pushio(Io *);
+char	next(void);
+void	unget(char);
+void	putbuf(char *, char);
+int	yylex(void);
+void	compile(char *);
+void	pp(void);
+void	ppname(void);
+void	ppdefine(void);
 
 /*
  * 	ast.c
@@ -255,9 +263,8 @@ extern	int		lastclass;
 extern	Type		*lasttype;
 extern	Type		*types[];
 extern	char		*lastname;
-extern	char		*lastfile;
 extern	Dstk		*declstk;
 extern	unsigned	block;
 extern	unsigned	nsue;
 extern	Io		*io;
-extern	Src		Src;
+extern	Src		src;
