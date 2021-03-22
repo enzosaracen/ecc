@@ -57,5 +57,8 @@ void warnf(char *fmt, ...)
 
 void yyerror(char *s)
 {
-	errorf("%s near %s", s, lastname);
+	if(lastname)
+		errorf("%s near %s", s, lastname);
+	else
+		errorf("%s", s);
 }

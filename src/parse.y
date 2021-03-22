@@ -43,7 +43,7 @@ prog:
 xdecl:
 	otspec decor
 	{
-		decl($2, lasttype, lastclass, SIDECL, NULL);
+		decor($2, lasttype, lastclass, SIDECL, NULL);
 		if(lasttype->ttype != TFUNC)
 			errorf("expected function type");
 		push(NULL, DBLOCK);
@@ -78,12 +78,12 @@ decl:
 dlist:
 	decor
 	{
-		decl($1, lasttype, lastclass, SIDECL, NULL);
+		decor($1, lasttype, lastclass, SIDECL, NULL);
 		freenode($1);
 	}
 |	decor '=' init
 	{
-		decl($1, lasttype, lastclass, SIDECL, NULL);
+		decor($1, lasttype, lastclass, SIDECL, NULL);
 		freenode($1);
 	}
 |	dlist ',' dlist
@@ -266,16 +266,14 @@ suespec:
 		nsue++;
 		$$ = type(TSTRUCT, NULL);
 		tdecl($2, $$);
-		sdecl($3, $$);
-		if($$->list == NULL)
-			printf("total failure :(\n");
-		prtype($$, 0);
+		sdecl($3, $$, $$);
 	}
 |	LSTRUCT	subody
 	{
 		nsue++;
 		$$ = type(TSTRUCT, NULL);
-		sdecl($2, $$);
+		sdecl($2, $$, $$);
+		freenode($2);
 	}
 |	LUNION tag
 	{
@@ -287,14 +285,15 @@ suespec:
 		nsue++;
 		$$ = type(TUNION, NULL);
 		tdecl($2, $$);
-		sdecl($3, $$);
-		prtype($$, 0);
+		sdecl($3, $$, $$);
+		freenode($3);
 	}
 |	LUNION subody
 	{
 		nsue++;
 		$$ = type(TUNION, NULL);
-		sdecl($2, $$);
+		sdecl($2, $$, $$);
+		freenode($2);
 	}
 |	LENUM tag
 |	LENUM tag enumbody
@@ -318,7 +317,7 @@ sudecl:
 	{
 
 		if(lastclass != CNONE)
-			errorf("members cannot have storage classes");
+			errorf("member cannot have storage class");
 		$$ = new(OMEMB, $2, NULL);
 		$$->type = $1;
 	}

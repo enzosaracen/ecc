@@ -225,11 +225,11 @@ void	prtree(Node *, int);
  */
 Type	*type(int, Type *);
 int	sametype(Type *, Type *);
-Type	*decl(Node *, Type *, int, int, Sym **);
+Type	*decor(Node *, Type *, int, int, Sym **);
 void	idecl(Sym *, Type *, int );
 void	ldecl(Sym *, Node *);
 void	tdecl(Sym *, Type *);
-Type	*sdecl(Node *, Type *);
+Type	*sdecl(Node *, Type *, Type *);
 void	pdecl(Node *, Type *);
 Type	*ptype(Node *);
 void	push(Sym *, int);

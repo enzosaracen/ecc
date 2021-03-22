@@ -10,6 +10,7 @@ Type *type(int ttype, Type *sub)
 	t->sub = sub;
 	t->sym = NULL;
 	t->list = NULL;
+	t->width = 0;
 	t->offset = 0;
 	return t;
 }
@@ -43,7 +44,7 @@ int sametype(Type *t, Type *t2)
 	return 0;
 }
 
-Type *decl(Node *n, Type *t, int c, int st, Sym **ms)
+Type *decor(Node *n, Type *t, int c, int st, Sym **ms)
 {
 	Node *n2;
 
@@ -67,7 +68,8 @@ Type *decl(Node *n, Type *t, int c, int st, Sym **ms)
 			n = n->l;
 			break;
 		case OIND:
-			t = types[TPTR];
+			t = type(TPTR, t);
+			t->width = types[TPTR]->width;
 			n = n->l;
 			break;
 		case OFUNC:
@@ -144,7 +146,7 @@ void tdecl(Sym *s, Type *t)
 	s->block = block;
 }
 
-Type *sdecl(Node *n, Type *t)
+Type *sdecl(Node *n, Type *st, Type *t)
 {
 	Type *b;
 
@@ -158,16 +160,17 @@ Type *sdecl(Node *n, Type *t)
 			t->list = type(TMEMB, NULL);
 			t = t->list;
 			if(n->op == OLIST)
-				t->sub = decl(n->r, b, CNONE, SMEMB, &t->sym);
+				t->sub = decor(n->r, b, CNONE, SMEMB, &t->sym);
 			else {
-				t->sub = decl(n, b, CNONE, SMEMB, &t->sym);
+				t->sub = decor(n, b, CNONE, SMEMB, &t->sym);
 				break;
 			}
 		}
+		st->width += t->sub->width;
 		return t;
 	case OLIST:
-		t = sdecl(n->r, t);
-		sdecl(n->l, t);
+		t = sdecl(n->r, t, st);
+		sdecl(n->l, t, st);
 		return NULL;
 	}
 }
@@ -228,7 +231,7 @@ Type *ptype(Node *n)
 				return NULL;
 			return n->type;
 		}
-		t = decl(n->l, n->type, CNONE, 0, NULL);
+		t = decor(n->l, n->type, CNONE, 0, NULL);
 		switch(t->ttype) {
 		case TFUNC:
 			t = type(TPTR, t);
@@ -438,6 +441,8 @@ void prtype(Type *t, int indent)
 	switch(t->ttype) {
 	case TSTRUCT:
 	case TUNION:
+		printf("width: %d\t", t->width);
+		/* fallthrough */
 	case TFUNC:
 		printf("%s\n", type2str(t->ttype));
 		prtype(t->sub, indent);
@@ -449,7 +454,6 @@ void prtype(Type *t, int indent)
 		prtype(t->list, indent);
 		break;
 	default:
-		printf("%s\n", type2str(t->ttype));
 		prtype(t->sub, indent+1);
 		prtype(t->list, indent);
 		break;

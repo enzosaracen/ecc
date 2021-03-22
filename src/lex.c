@@ -65,6 +65,7 @@ void lexinit(void)
 		s = lookup();
 		s->lex = rsvd[i].lex;
 	}
+	lastname = 0;
 }
 
 Sym *lookup(void)
