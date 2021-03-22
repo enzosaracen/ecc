@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct Io Io;
 typedef struct Src Src;
 typedef struct Sym Sym;
 typedef struct Dstk Dstk;
@@ -11,9 +12,15 @@ typedef struct Type Type;
 typedef struct Node Node;
 
 struct Src {
-	FILE	*fp;
-	int	line, col;
 	char	*name;
+	int	line;
+};
+
+struct Io {
+	FILE	*fp;
+	char	*buf, *p;
+	int	len;
+	Io	*prev;
 };
 
 struct Sym {
@@ -25,6 +32,7 @@ struct Sym {
 	int		class;
 	unsigned	block;
 	unsigned	nsue;
+	char		*mac;
 	Sym		*next;
 };
 
@@ -206,10 +214,11 @@ void	yyerror(char *);
 /*
  *	lex.c
  */
-void	lexinit(void);
-Sym	*lookup(void);
-int	yylex(void);
-void	compile(void);
+unsigned	hash(char *);
+void		lexinit(void);
+Sym		*lookup(void);
+int		yylex(void);
+void		compile(void);
 
 /*
  * 	ast.c
@@ -240,13 +249,15 @@ int	incomp(Type *t);
 char	*type2str(int);
 void	prtype(Type *, int);
 
-extern	Src		src;
 extern	FILE		*outfile;
 extern	int		bits;
 extern	int		lastclass;
 extern	Type		*lasttype;
 extern	Type		*types[];
 extern	char		*lastname;
+extern	char		*lastfile;
 extern	Dstk		*declstk;
 extern	unsigned	block;
 extern	unsigned	nsue;
+extern	Io		*io;
+extern	Src		Src;

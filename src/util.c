@@ -36,7 +36,7 @@ void errorf(char *fmt, ...)
 {
 	va_list arg;
 
-	fprintf(stderr, "%s:%d:%d: error: ", src.name, src.line, src.col);
+	fprintf(stderr, "%s:%d: error: ", src.name, src.line);
 	va_start(arg, fmt);
 	vfprintf(stderr, fmt, arg);
 	va_end(arg);
@@ -48,7 +48,7 @@ void warnf(char *fmt, ...)
 {
 	va_list arg;
 
-	fprintf(stderr, "%s:%d:%d: warning: ", src.name, src.line, src.col);
+	fprintf(stderr, "%s:%d: warning: ", src.name, src.line);
 	va_start(arg, fmt);
 	vfprintf(stderr, fmt, arg);
 	va_end(arg);

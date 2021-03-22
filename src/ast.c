@@ -50,6 +50,14 @@ Node *fold(Node *n)
 	case OEQ:
 	case ONE:
 		goto binop;
+	case OSIZEOF:
+		if(n->type != NULL) {
+			if(incomp(n->type))
+				errorf("cannot get size of incomplete type");
+			l = n->type->width;
+			goto ret;
+		}
+		return n;
 	default:
 		return n;
 	}

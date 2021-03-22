@@ -2,7 +2,6 @@
 
 #define MAX 32
 
-Src		src;
 FILE		*outfile;
 int		bits;
 int		lastclass;
@@ -11,6 +10,8 @@ char		*lastname;
 Dstk		*declstk;
 unsigned	block;
 unsigned	nsue;
+Io		*io;
+Src		src;
 
 int main(int argc, char *argv[])
 {
@@ -55,13 +56,7 @@ int main(int argc, char *argv[])
 	*filesp = 0;
 	if(outname == NULL)
 		outname = "a.out";
-	for(filesp = files; *filesp; filesp++) {
-		src.fp = fopen(*filesp, "r");
-		if(src.fp == NULL)
-			panic("cannot open %s for reading", *filesp);
-		src.name = *filesp;
-		src.line = src.col = 1;
-		compile();
-	}
+	for(filesp = files; *filesp; filesp++)
+		compile(*filesp);
 	return 0;
 }

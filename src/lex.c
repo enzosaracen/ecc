@@ -5,13 +5,9 @@
 #define NLBUF 1024
 #define NOPEEK -2
 
-char peek;
-char lbuf[NLBUF];
-Sym *hash[NHASH];
-struct {
-	char b[BUFSIZ], *p;
-	int c;		
-} fin;
+char	peek;
+char	lbuf[NLBUF];
+Sym	*syms[NHASH];
 
 struct {
 	char *s;
@@ -65,24 +61,21 @@ void lexinit(void)
 		s = lookup();
 		s->lex = rsvd[i].lex;
 	}
-	lastname = 0;
 }
 
 Sym *lookup(void)
 {
 	Sym *s;
-	int c;
 	unsigned h;
-	char *cp;
+	char c, *cp;
 
 	cp = lbuf;
 	h = 5381;
 	while((c = *cp++))
 		h = ((h << 5) + h) + c;
 	h %= NHASH;
-
 	c = lbuf[0];
-	for(s = hash[h]; s; s = s->next) {
+	for(s = syms[h]; s; s = s->next) {
 		if(s->name[0] != c)
 			continue;
 		if(strcmp(s->name, lbuf) == 0)
@@ -91,8 +84,8 @@ Sym *lookup(void)
 	s = emalloc(sizeof(Sym));
 	s->name = estrdup(lbuf);
 	lastname = s->name;
-	s->next = hash[h];
-	hash[h] = s;
+	s->next = syms[h];
+	syms[h] = s;
 	s->type = NULL;
 	s->label = NULL;
 	s->tag = NULL;
@@ -100,28 +93,70 @@ Sym *lookup(void)
 	s->nsue = 0;
 	s->block = 0;
 	s->lex = LID;
+	s->mac = NULL:
 	return s;
+}
+
+Io *newio(FILE *fp, char *buf, int len)
+{
+	Io *i;
+
+	i = emalloc(sizeof(Io));
+	i->fp = fp;
+	i->buf = buf;
+	i->len = len;
+	i->p = i->buf;
+}
+
+void popio(void)
+{
+	Io *i;
+
+	i = io->prev;
+	free(io);
+	io = i;
+}
+
+void pushio(Io *i)
+{
+	i->prev = io;
+	io = i;
 }
 
 char next(void)
 {
 	char c;
-
-	if(--fin.c <= 0) {
-		fin.c = fread(fin.b, 1, BUFSIZ, src.fp);
-		if(fin.c == -1) 
-			panic("error reading file %s", src.name);
-		else if(fin.c == 0)
-			return EOF;
-		fin.p = fin.b;
+	
+	if(peek != NOPEEK) {
+		c = peek;
+		peek = NOPEEK;
+		return c;
 	}
-	c = *fin.p++;
-	if(c == '\n') {
+	if(--io->len < 0) {
+		io->len = 0;
+		if(io->fp != NULL)
+			io->len = fread(io->buf, 1, BUFSIZ, io->fp);
+		if(io->len == -1) 
+			panic("error reading file %s", io->name);
+		else if(io->len == 0)
+			if(io->prev != NULL) {
+				popio();
+				return next();
+			} else
+				return EOF;
+		io->p = io->buf;
+	}
+	c = *io->p++;
+	if(c == '\n')
 		src.line++;
-		src.col = 1;
-	} else if(isprint(c))
-		src.col++;
 	return c;
+}
+
+void unget(char c)
+{
+	peek = c;
+	if(c == '\n')
+		src.line--;
 }
 
 void putbuf(char *cp, char c)
@@ -136,14 +171,8 @@ int yylex(void)
 	long v;
 	int c;
 	char c2, *cp;
-start:
-	if(peek != NOPEEK) {
-		c = peek;
-		peek = NOPEEK;
-	} else
-		c = next();
 
-	for(; isspace(c); c = next());
+	for(c = next(); isspace(c); c = next());
 	if(isdigit(c)) 
 		goto lexnum;
 	if(isalpha(c) || c == '_') {
@@ -262,10 +291,13 @@ start:
 		yylval.sval = estrdup(lbuf);
 		return LSTRING;
 		break;
+	case '#':
+		pp();
+		break;
 	default:
 		return c;
 	}
-	peek = c2;
+	unget(c2);
 	return c; 
 lexnum:
 	v = 0;
@@ -273,7 +305,7 @@ lexnum:
 		v = v*10 + c-'0';
 		c = next();
 	}
-	peek = c;
+	unget(c);
 	yylval.lval = v;
 	return LNUM;
 lexid:
@@ -281,7 +313,7 @@ lexid:
 		putbuf(cp++, c);
 		c = next();
 	}
-	peek = c;
+	unget(c);
 	*cp = 0;
 	yylval.sym = lookup();
 	if(yylval.sym->class == CTYPEDEF)
@@ -289,8 +321,75 @@ lexid:
 	return yylval.sym->lex;
 }
 
-void compile(void)
+void compile(char *file)
 {
+	FILE *fp;
+
+	src.name = file;
+	src.line = 0;
+	fp = fopen(file, "r");
+	if(fp == NULL)
+		panic("cannot open %s for reading", file);
+	io = newio(fp, emalloc(BUFSIZ), 0);
 	lexinit();
 	yyparse();
+}
+
+/*
+ *	preprocessor
+ */
+void pp(void)
+{
+	/* note - ppname will error on a null directive, so maybe fix */
+	ppname();
+	if(strcmp(lbuf,	"include") == 0)
+		ppinclude();
+	else if(strcmp(lbuf, "define") == 0)
+		ppdefine();
+	else if(strcmp(lbuf, "undef") == 0)
+		ppundef();
+	else if(strcmp(lbuf, "if") == 0)
+		ppif();
+	else if(strcmp(lbuf, "elseif") == 0)
+		ppelseif();
+	else if(strcmp(lbuf, "else") == 0)
+		ppelse();
+	else if(strcmp(lbuf, "endif") == 0)
+		ppendif();
+	else
+		errorf("invalid directive");
+}
+
+void ppname(void)
+{
+	char c, *cp;
+
+	for(; isspace(c); c = next()) {
+		if(c == '\\') {
+			if(next() != '\n')
+				errorf("expected newline after backslash in macro definition\n");
+			c = next();
+			break;
+		} else if(c == '\n')
+			errorf("newline too soon in macro definition");
+	}
+	if(!isalpha(c) && c != '_')
+		errorf("macro names must be identifiers");
+	cp = lbuf;
+	while(isalnum(c) || c == '_')
+		putbuf(cp++, c);
+	*cp = 0;
+	if(!isspace(c))
+		errorf("whitespace required after macro name");
+	unget(c);
+}
+
+void ppdefine(void)
+{
+	Sym *s;
+
+	ppname();
+	s = lookup();
+	if(s->mac != NULL)
+		errorf("redefinition of macro %s", s->name);
 }
