@@ -96,9 +96,8 @@ Sym *lookup(void)
 	s->label = NULL;
 	s->tag = NULL;
 	s->class = CNONE;
-	s->offset = 0;
+	s->nsue = 0;
 	s->block = 0;
-	s->suenum = 0;
 	s->lex = LID;
 	return s;
 }

@@ -7,11 +7,10 @@ FILE		*outfile;
 int		bits;
 int		lastclass;
 Type		*lasttype;
-int		offset;
 char		*lastname;
 Dstk		*declstk;
 unsigned	block;
-unsigned	suenum;
+unsigned	nsue;
 
 int main(int argc, char *argv[])
 {

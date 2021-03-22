@@ -23,9 +23,8 @@ struct Sym {
 	Node		*label;
 	char		*name;
 	int		class;
-	unsigned	offset;
 	unsigned	block;
-	unsigned	suenum;
+	unsigned	nsue;
 	Sym		*next;
 };
 
@@ -73,6 +72,7 @@ enum {
 	TFUNC,
 	TSTRUCT,
 	TUNION,
+	TMEMB,
 };
 
 enum {
@@ -85,11 +85,12 @@ enum {
 };
 
 struct Type {
-	int	ttype;
-	int	width;
-	Type	*sub;
-	Sym	*sym;
-	Type	*list;
+	int		ttype;
+	int		width;
+	Type		*sub;
+	Sym		*sym;
+	Type		*list;
+	unsigned	offset;
 };
 
 enum {
@@ -224,11 +225,11 @@ void	prtree(Node *, int);
  */
 Type	*type(int, Type *);
 int	sametype(Type *, Type *);
-Type	*decl(Node *, Type *, int, int);
+Type	*decl(Node *, Type *, int, int, Sym **);
 void	idecl(Sym *, Type *, int );
 void	ldecl(Sym *, Node *);
 void	tdecl(Sym *, Type *);
-void	sdecl(Node *, Type *);
+Type	*sdecl(Node *, Type *);
 void	pdecl(Node *, Type *);
 Type	*ptype(Node *);
 void	push(Sym *, int);
@@ -244,9 +245,8 @@ extern	FILE		*outfile;
 extern	int		bits;
 extern	int		lastclass;
 extern	Type		*lasttype;
-extern	int		offset;
 extern	Type		*types[];
 extern	char		*lastname;
 extern	Dstk		*declstk;
 extern	unsigned	block;
-extern	unsigned	suenum;
+extern	unsigned	nsue;

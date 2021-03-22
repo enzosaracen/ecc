@@ -10,6 +10,7 @@ Type *type(int ttype, Type *sub)
 	t->sub = sub;
 	t->sym = NULL;
 	t->list = NULL;
+	t->offset = 0;
 	return t;
 }
 
@@ -22,6 +23,9 @@ int sametype(Type *t, Type *t2)
 		case TFUNC:
 			if(!sametype(t->sub, t2->sub))
 				return 0;
+			/* fallthrough */
+		case TUNION:
+		case TSTRUCT:
 			while(t->list != NULL && t2->list != NULL) {
 				if(!sametype(t->list, t2->list))
 					return 0;
@@ -32,15 +36,6 @@ int sametype(Type *t, Type *t2)
 		case TPTR:
 		case TARRAY:
 			return sametype(t->sub, t2->sub);
-		case TUNION:
-		case TSTRUCT:
-			while(t->list != NULL && t2->list != NULL) {
-				if(!sametype(t->list, t2->list))
-					return 0;
-				t = t->list;
-				t2 = t2->list;
-			}
-			return 1;
 		default:
 			return 1;
 		}
@@ -48,7 +43,7 @@ int sametype(Type *t, Type *t2)
 	return 0;
 }
 
-Type *decl(Node *n, Type *t, int c, int settype)
+Type *decl(Node *n, Type *t, int c, int st, Sym **ms)
 {
 	Node *n2;
 
@@ -85,15 +80,15 @@ Type *decl(Node *n, Type *t, int c, int settype)
 			n = n->l;
 			break;
 		case OID:
-			switch(settype) {
+			switch(st) {
 			case SIDECL:
 				idecl(n->sym, t, c);
 				break;
 			case SMEMB:
-				if(n->sym->suenum == suenum)
+				if(n->sym->nsue == nsue)
 					errorf("duplicate member %s", n->sym->name);
-				n->sym->suenum = suenum;
-				t->sym = n->sym;
+				n->sym->nsue = nsue;
+				*ms = n->sym;
 				break;
 			}
 			lasttype = t;
@@ -149,32 +144,42 @@ void tdecl(Sym *s, Type *t)
 	s->block = block;
 }
 
-void sdecl(Node *n, Type *t)
+Type *sdecl(Node *n, Type *t)
 {
-	Type *base;
+	Type *b;
 
 	if(n == NULL)
-		return;
+		return NULL;
 	switch(n->op) {
 	case OMEMB:
-		base = n->type;
-		n = n->l;
+		b = n->type;
 		while(n != NULL) {
-			if(n->op == OLIST) {
-				t->list = decl(n->r, base, CNONE, SMEMB);
-				t = t->list;
-				n = n->l;
-			} else {
-				t->list = decl(n, base, CNONE, SMEMB);
+			n = n->l;
+			t->list = type(TMEMB, NULL);
+			t = t->list;
+			if(n->op == OLIST)
+				t->sub = decl(n->r, b, CNONE, SMEMB, &t->sym);
+			else {
+				t->sub = decl(n, b, CNONE, SMEMB, &t->sym);
 				break;
 			}
 		}
-		return;
+		return t;
 	case OLIST:
+		t = sdecl(n->r, t);
 		sdecl(n->l, t);
-		sdecl(n->r, t->list);
-		return;
+		return NULL;
 	}
+}
+
+Type *getmemb(Type *t, Sym *s)
+{
+	while(t->list != NULL) {
+		if(t->list->sym == s)
+			return t->list;
+		t = t->list;
+	}
+	return NULL;
 }
 
 void pdecl(Node *n, Type *t)
@@ -223,7 +228,7 @@ Type *ptype(Node *n)
 				return NULL;
 			return n->type;
 		}
-		t = decl(n->l, n->type, CNONE, 0);
+		t = decl(n->l, n->type, CNONE, 0, NULL);
 		switch(t->ttype) {
 		case TFUNC:
 			t = type(TPTR, t);
@@ -416,6 +421,7 @@ char *type2str(int ttype)
 	case TFUNC:	return "func";
 	case TSTRUCT:	return "struct";
 	case TUNION:	return "union";
+	case TMEMB:	return "member";
 	default:
 		errorf("unrecognized ttype %d when printing type", ttype);
 	}
@@ -436,6 +442,11 @@ void prtype(Type *t, int indent)
 		printf("%s\n", type2str(t->ttype));
 		prtype(t->sub, indent);
 		prtype(t->list, indent+1);
+		break;
+	case TMEMB:
+		printf("%s: ", type2str(t->ttype));
+		prtype(t->sub, indent);
+		prtype(t->list, indent);
 		break;
 	default:
 		printf("%s\n", type2str(t->ttype));
