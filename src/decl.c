@@ -44,6 +44,7 @@ int sametype(Type *t, Type *t2)
 	return 0;
 }
 
+/*
 Type *decor(Node *n, Type *t, int c, int st, Sym **ms)
 {
 	Node *n2;
@@ -78,7 +79,6 @@ Type *decor(Node *n, Type *t, int c, int st, Sym **ms)
 			n = n->l;
 			break;
 		case OBIT:
-			/* ignore for now */
 			n = n->l;
 			break;
 		case OID:
@@ -97,7 +97,7 @@ Type *decor(Node *n, Type *t, int c, int st, Sym **ms)
 			return t;
 		}
 	}
-}
+}*/
 
 void idecl(Sym *s, Type *t, int c)
 {
@@ -146,6 +146,7 @@ void tdecl(Sym *s, Type *t)
 	s->block = block;
 }
 
+/*
 Type *sdecl(Node *n, Type *st, Type *t)
 {
 	Type *b;
@@ -173,7 +174,7 @@ Type *sdecl(Node *n, Type *st, Type *t)
 		sdecl(n->l, t, st);
 		return NULL;
 	}
-}
+}*/
 
 Type *getmemb(Type *t, Sym *s)
 {
@@ -184,14 +185,14 @@ Type *getmemb(Type *t, Sym *s)
 	}
 	return NULL;
 }
-
+/*
 void pdecl(Node *n, Type *t)
 {
 	if(n == NULL)
 		return;
 	switch(n->op) {
 	case OPARM:
-		/* type already stored in t, so we just need to dig until we find id */	
+		type already stored in t, so we just need to dig until we find id
 		while(n->op != OID) {
 			n = n->l;
 			if(n == NULL) {
@@ -212,12 +213,13 @@ void pdecl(Node *n, Type *t)
 		pdecl(n->r, t->list);
 		return;
 	case OELLIPSIS:
-		/* ignore for now */
+		ignore for now
 		pdecl(n->l, t);
 		return;
 	}
-}
+}*/
 
+/*
 Type *ptype(Node *n)
 {
 	Type *t;
@@ -250,10 +252,10 @@ Type *ptype(Node *n)
 err:			errorf("void must be the only parameter");
 		return t;
 	case OELLIPSIS:
-		/* ignore for now  */
+		ignore for now
 		return ptype(n->l);
 	}
-}
+}*/
 
 void push(Sym *s, int dtype)
 {

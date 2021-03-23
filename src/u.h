@@ -20,7 +20,6 @@ struct Io {
 	FILE	*fp;
 	char	*buf, *p;
 	int	len;
-	Io	*prev;
 };
 
 struct Sym {
@@ -216,17 +215,18 @@ void	yyerror(char *);
  */
 void	lexinit(void);
 Sym	*lookup(void);
-Io	*newio(FILE *, char *, int);
 void	popio(void);
-void	pushio(Io *);
+void	pushio(FILE *, char *, int);
 char	next(void);
 void	unget(char);
 void	putbuf(char *, char);
 int	yylex(void);
 void	compile(char *);
 void	pp(void);
+char	ppnext(void);
 void	ppname(void);
 void	ppdefine(void);
+void	ppundef(void);
 
 /*
  * 	ast.c
@@ -242,13 +242,13 @@ void	prtree(Node *, int);
  */
 Type	*type(int, Type *);
 int	sametype(Type *, Type *);
-Type	*decor(Node *, Type *, int, int, Sym **);
+/*Type	*decor(Node *, Type *, int, int, Sym **);*/
 void	idecl(Sym *, Type *, int );
 void	ldecl(Sym *, Node *);
 void	tdecl(Sym *, Type *);
-Type	*sdecl(Node *, Type *, Type *);
-void	pdecl(Node *, Type *);
-Type	*ptype(Node *);
+/*Type	*sdecl(Node *, Type *, Type *);*/
+/*void	pdecl(Node *, Type *);*/
+/*Type	*ptype(Node *);*/
 void	push(Sym *, int);
 void	pop(void);
 void	spec(int);
@@ -266,5 +266,4 @@ extern	char		*lastname;
 extern	Dstk		*declstk;
 extern	unsigned	block;
 extern	unsigned	nsue;
-extern	Io		*io;
 extern	Src		src;

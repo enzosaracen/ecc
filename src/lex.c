@@ -3,11 +3,15 @@
 
 #define NHASH 1024
 #define NLBUF 1024
+#define NIO 1024
 #define NOPEEK -2
 
 char	peek;
+char	oldpeek;
 char	lbuf[NLBUF];
 Sym	*syms[NHASH];
+Io	*iostk[NIO];
+int	nio;
 
 struct {
 	char *s;
@@ -54,6 +58,7 @@ void lexinit(void)
 	Sym *s;
 
 	peek = NOPEEK;
+	oldpeek = NOPEEK;
 	for(i = 0; rsvd[i].s; i++) {
 		for(j = 0; rsvd[i].s[j]; j++)
 			lbuf[j] = rsvd[i].s[j];
@@ -97,30 +102,25 @@ Sym *lookup(void)
 	return s;
 }
 
-Io *newio(FILE *fp, char *buf, int len)
+void popio(void)
+{
+	if(nio < 0)
+		errorf("cannot pop off iostack...");
+	free(iostk[nio--]);
+}
+
+void pushio(FILE *fp, char *buf, int len)
 {
 	Io *i;
 
+	if(nio >= NIO)
+		errorf("macro depth limit reached");
 	i = emalloc(sizeof(Io));
 	i->fp = fp;
 	i->buf = buf;
 	i->len = len;
 	i->p = i->buf;
-}
-
-void popio(void)
-{
-	Io *i;
-
-	i = io->prev;
-	free(io);
-	io = i;
-}
-
-void pushio(Io *i)
-{
-	i->prev = io;
-	io = i;
+	iostk[++nio] = i;
 }
 
 char next(void)
@@ -131,26 +131,33 @@ char next(void)
 		c = peek;
 		peek = NOPEEK;
 		return c;
-	}
-	if(--io->len < 0) {
-		io->len = 0;
-		if(io->fp != NULL)
-			io->len = fread(io->buf, 1, BUFSIZ, io->fp);
-		if(io->len == -1) 
+	} else if(iostk[nio]->fp == NULL) {
+		if(iostk[nio]->p == 0)
+			goto pop;
+	} else if(--iostk[nio]->len < 0) {
+		iostk[nio]->len = fread(iostk[nio]->buf, 1, BUFSIZ, iostk[nio]->fp);
+		if(iostk[nio]->len == -1) 
 			panic("error reading file %s", src.name);
-		else if(io->len == 0) {
-			if(io->prev != NULL) {
-				popio();
-				return next();
-			} else
-				return EOF;
-		}
-		io->p = io->buf;
+		else if(iostk[nio]->len == 0)
+			goto pop;
+		iostk[nio]->p = iostk[nio]->buf;
 	}
-	c = *io->p++;
+
+
+	c = *iostk[nio]->p++;
 	if(c == '\n')
 		src.line++;
 	return c;
+pop:
+	if(oldpeek != NOPEEK) {
+		c = oldpeek;
+		oldpeek = NOPEEK;
+		return c;
+	} else if(nio >= 0) {
+		popio();
+		return next();
+	} else
+		return EOF;
 }
 
 void unget(char c)
@@ -174,7 +181,7 @@ int yylex(void)
 	char c2, *cp;
 
 start:
-	for(c = next(); isspace(c); c = next());
+	while(isspace(c = next()));
 	if(isdigit(c)) 
 		goto lexnum;
 	if(isalpha(c) || c == '_') {
@@ -318,6 +325,14 @@ lexid:
 	unget(c);
 	*cp = 0;
 	yylval.sym = lookup();
+	if(yylval.sym->mac != NULL) {
+		pushio(NULL, yylval.sym->mac, 0);
+		if(peek != NOPEEK) {
+			oldpeek = peek;
+			peek = NOPEEK;
+		}
+		goto start;
+	}
 	if(yylval.sym->class == CTYPEDEF)
 		yylval.sym->lex = LTYPE;
 	return yylval.sym->lex;
@@ -332,7 +347,7 @@ void compile(char *file)
 	fp = fopen(file, "r");
 	if(fp == NULL)
 		panic("cannot open %s for reading", file);
-	io = newio(fp, emalloc(BUFSIZ), 0);
+	pushio(fp, emalloc(BUFSIZ), 0);
 	lexinit();
 	yyparse();
 }
@@ -342,39 +357,47 @@ void compile(char *file)
  */
 void pp(void)
 {
-	/* note - ppname will error on a null directive, so maybe fix */
+	/* note - ppname will error on a null directive, so maybe fix,
+	 * should probably not have ppname */
 	ppname();
 	if(strcmp(lbuf,	"include") == 0)
-		ppinclude();
+		errorf("unimp");
 	else if(strcmp(lbuf, "define") == 0)
 		ppdefine();
 	else if(strcmp(lbuf, "undef") == 0)
 		ppundef();
 	else if(strcmp(lbuf, "if") == 0)
-		ppif();
+		errorf("unimp");
 	else if(strcmp(lbuf, "elseif") == 0)
-		ppelseif();
+		errorf("unimp");
 	else if(strcmp(lbuf, "else") == 0)
-		ppelse();
+		errorf("unimp");
 	else if(strcmp(lbuf, "endif") == 0)
-		ppendif();
+		errorf("unimp");
 	else
 		errorf("invalid directive");
+}
+
+char ppnext(void)
+{
+	char c;
+
+	c = next();
+	if(c == '\\')
+		if(next() != '\n')
+			errorf("expected newline after backslash in macro definition");
+	if(c == EOF)
+		errorf("eof in macro definition");
+	return c;
 }
 
 void ppname(void)
 {
 	char c, *cp;
 
-	for(; isspace(c); c = next()) {
-		if(c == '\\') {
-			if(next() != '\n')
-				errorf("expected newline after backslash in macro definition\n");
-			c = next();
-			break;
-		} else if(c == '\n')
-			errorf("newline too soon in macro definition");
-	}
+	while(isspace(c = ppnext()))
+		if(c == '\n')
+			errorf("unexpected newline in macro definition");
 	if(!isalpha(c) && c != '_')
 		errorf("macro names must be identifiers");
 	cp = lbuf;
@@ -389,9 +412,29 @@ void ppname(void)
 void ppdefine(void)
 {
 	Sym *s;
+	char c, *cp;
 
 	ppname();
 	s = lookup();
 	if(s->mac != NULL)
 		errorf("redefinition of macro %s", s->name);
+	/* shouldn't limit macro size to size of lbuf, and have yet
+	 * to implement macro functions, but this works for now... */
+	cp = lbuf;
+	while((c = ppnext()) != '\n')
+		putbuf(cp++, c);
+	*cp = 0;
+	s->mac = estrdup(lbuf);
+}
+
+void ppundef(void)
+{
+	Sym *s;
+
+	ppname();
+	s = lookup();
+	if(s->mac != NULL) {
+		free(s->mac);
+		s->mac = NULL;
+	}
 }

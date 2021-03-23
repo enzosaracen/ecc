@@ -7,12 +7,16 @@
 	 Type	*type;
 	 char	*sval;
 	 long	lval;
+	 struct {
+		Sym *s;
+		Type *t;
+	 } syty;
 }
 
-%type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel idlist stmt
-%type	<node>	id ilist init dlist decor ddecor oadecor adecor dadecor parms label slist decl
-%type	<node>	sudecor sudecorlist sudecl sudecllist subody
-%type	<type>	suespec tspec otspec
+%type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel stmt
+%type	<node>	id ilist init label slist
+%type	<type>	suespec tspec otspec sudecor sudecorlist sudecl sudecllist subody oadecor adecor dadecor parms
+%type	<syty>	decor ddecor
 %type	<sym>	tag
 
 %token	<sym>	LID LTYPE
@@ -43,12 +47,23 @@ prog:
 xdecl:
 	otspec decor
 	{
-		decor($2, lasttype, lastclass, SIDECL, NULL);
-		if(lasttype->ttype != TFUNC)
+		Type *p;
+	
+		if($2.t->ttype != TFUNC)
 			errorf("expected function type");
+		idecl($2.s, $2.t, lastclass);
 		push(NULL, DBLOCK);
-		pdecl($2, lasttype);
-		freenode($2);
+		/* link the types to the attached syms */
+		for(p = $2.t->list; p != NULL; p = p->list) {
+			if(p->sym == NULL) {
+				if(p->sub->ttype == TVOID)
+					break;
+				errorf("parameter name needed in function definition");
+			}
+			if(incomp(p->sub))
+				errorf("parameter %s has incomplete type", p->sym->name);
+			idecl(p->sym, p->sub, CAUTO);
+		}
 	}
 	'{' slist '}'
 	{
@@ -66,71 +81,69 @@ xdecl:
 decl:
 	tspec ';'
 	{
-		$$ = NULL;
 		lastclass = CNONE;
 	}
 |	tspec dlist ';'
 	{
-		$$ = $2;
 		lastclass = CNONE;
 	}
 
 dlist:
 	decor
-	{
-		decor($1, lasttype, lastclass, SIDECL, NULL);
-		freenode($1);
-	}
 |	decor '=' init
-	{
-		decor($1, lasttype, lastclass, SIDECL, NULL);
-		freenode($1);
-	}
 |	dlist ',' dlist
 
 init:
 	expr
 |	'{' ilist '}'
-	{
-		$$ = $2;
-	}
 |	'{' ilist ',' '}'
-	{
-		$$ = $2;
-	}
 
 ilist:
 	init
 |	ilist ',' ilist
-	{
-		$$ = new(OLIST, $1, $3);
-	}
 	
 decor:
 	ddecor
 |	'*' qlist decor
 	{
-		$$ = new(OIND, $3, NULL);
+		$3.t = type(TPTR, $3.t);
+		$$ = $3;
 	}
 
 ddecor:
-	id	
+	id
+	{
+		$$.t = NULL;
+		$$.s = $1->sym;
+	}
 |	'(' decor ')'
 	{
 		$$ = $2;
 	}
 |	ddecor '[' oexpr ']'
 	{
-	
-		$$ = new(OARRAY, $1, $3);
+		$$.s = $1.s;
+		$$.t = type(TARRAY, $1.t);
+		if($3 != NULL) {
+			$3 = fold($3);
+			if($3->op != OCONST)
+				errorf("array size must be constant");
+			else if($3->lval < 0)
+				errorf("array size muust be positive");
+			$$.t->width = $3->lval * $$.t->sub->width;
+			freenode($3);
+		}
 	}
 |	ddecor '(' parms ')'
 	{
-		$$ = new(OFUNC, $1, $3);
+		$$.t = type(TFUNC, $1.t);
+		$$.t->list = $3;
+		$$.s = $1.s;
 	}
 |	ddecor '(' ')'
 	{
-		$$ = new(OFUNC, $1, NULL);
+		$$.t = type(TFUNC, $1.t);
+		$$.s = $1.s;
 	}
 
 parms:
@@ -138,35 +151,47 @@ parms:
 	{
 		if(lastclass != CNONE)
 			errorf("parameter declaration cannot have storage class");
-		$$ = new(OPARM, $2, NULL);
-		$$->type = $1;
+		$$ = $2;
+		switch($$->ttype) {
+		case TFUNC:
+			$$ = type(TPTR, $$);
+			break;
+		case TARRAY:
+			$$ = type(TPTR, $$->sub);
+			break;
+		}
 	}
+	/* attach syms to types we return because we do not know if it is a func def or not */
 |	tspec decor
 	{
 		if(lastclass != CNONE)
 			errorf("parameter declaration cannot have storage class");
-		$$ = new(OPARM, $2, NULL);
-		$$->type = $1;
+		$$ = $2.t;
+		switch($$->ttype) {
+		case TFUNC:
+			$$ = type(TPTR, $$);
+			break;
+		case TARRAY:
+			$$ = type(TPTR, $$->sub);
+			break;
+		}
+		$$->sym = $2.s;
 	}
 |	parms ',' parms
 	{
-		$$ = new(OLIST, $1, $3);
+		if($1->ttype == TVOID || $3->ttype == TVOID)
+			errorf("void must be the only parameter");
+		$$ = $1;
+		$1->list = $3->list;
 	}
 |	parms ',' '.' '.' '.'
 	{
-		$$ = new(OELLIPSIS, $1, NULL);
-	}
-
-idlist:
-	id
-|	idlist ',' idlist
-	{
-		$$ = new(OLIST, $1, $3);
+		/* ignore for now */
 	}
 
 oadecor:
 	{
-		$$ = NULL;
+		$$ = lasttype;
 	}
 |	adecor
 
@@ -174,33 +199,53 @@ adecor:
 	dadecor
 |	'*' qlist
 	{
-		$$ = new(OIND, NULL, NULL);
+		$$ = type(TPTR, lasttype);
 	}
 |	'*' qlist dadecor
 	{
-		$$ = new(OIND, $3, NULL);
+		$$ = type(TPTR, $3);
 	}
 
 dadecor:
 	'(' oadecor ')'
 	{
-		$$ = new(OFUNC, NULL, $2);
+		$$ = $2;
 	}
 |	'[' oexpr ']'
 	{
-		$$ = new(OARRAY, NULL, $2);
+		$$ = type(TARRAY, lasttype);
+		if($2 != NULL) {
+			$2 = fold($2);
+			if($2->op != OCONST)
+				errorf("array size must be constant");
+			else if($2->lval < 0)
+				errorf("array size muust be positive");
+			$$->width = $2->lval * $$->sub->width;
+			freenode($2);
+		}
 	}
 |	'(' parms ')'
 	{
-		$$ = new(OFUNC, NULL, $2);
+		$$ = type(TFUNC, lasttype);
+		$$->list = $2;
 	}
 |	dadecor '[' oexpr ']'
 	{
-		$$ = new(OARRAY, $1, $3);
+		$$ = type(TARRAY, $1);
+		if($3 != NULL) {
+			$3 = fold($3);
+			if($3->op != OCONST)
+				errorf("array size must be constant");
+			else if($3->lval < 0)
+				errorf("array size muust be positive");
+			$$->width = $3->lval * $$->sub->width;
+			freenode($3);
+		}
 	}
 |	dadecor '(' parms ')'
 	{
-		$$ = new(OFUNC, $1, $3);
+		$$ = type(TFUNC, $1);
+		$$->list = $3;
 	}
 
 otspec:
@@ -261,39 +306,48 @@ suespec:
 		$$ = type(TSTRUCT, NULL);
 		tdecl($2, $$);
 	}
-|	LSTRUCT	tag subody
+|	LSTRUCT	tag
 	{
+		$<type>$ = type(TSTRUCT, NULL);
+		tdecl($2, $<type>$);
 		nsue++;
-		$$ = type(TSTRUCT, NULL);
-		tdecl($2, $$);
-		sdecl($3, $$, $$);
 	}
-|	LSTRUCT	subody
+	subody
+	{
+		$$->sub = $<type>3;
+	}
+|	LSTRUCT
 	{
 		nsue++;
+	}
+	subody
+	{
 		$$ = type(TSTRUCT, NULL);
-		sdecl($2, $$, $$);
-		freenode($2);
+		$$->sub = $<type>2;
 	}
 |	LUNION tag
 	{
 		$$ = type(TUNION, NULL);
 		tdecl($2, $$);
 	}
-|	LUNION tag subody 
+|	LUNION tag
 	{
 		nsue++;
-		$$ = type(TUNION, NULL);
-		tdecl($2, $$);
-		sdecl($3, $$, $$);
-		freenode($3);
+		tdecl($2, $<type>$);
 	}
-|	LUNION subody
+	subody 
+	{
+		$$ = type(TUNION, NULL);
+		$$->sub = $<type>3;
+	}
+|	LUNION
 	{
 		nsue++;
+	}
+	subody
+	{
 		$$ = type(TUNION, NULL);
-		sdecl($2, $$, $$);
-		freenode($2);
+		$$->sub = $<type>2;
 	}
 |	LENUM tag
 |	LENUM tag enumbody
@@ -309,31 +363,43 @@ sudecllist:
 	sudecl
 |	sudecllist sudecl
 	{
-		$$ = new(OLIST, $1, $2);
+		$1->list = $2->list;
+		$$ = $1;
 	}
 
 sudecl:
 	tspec sudecorlist ';'
 	{
-
 		if(lastclass != CNONE)
 			errorf("member cannot have storage class");
-		$$ = new(OMEMB, $2, NULL);
-		$$->type = $1;
+		$$ = $2;
 	}
 
 sudecor:
 	decor
+	{
+		if($1.s->nsue == nsue)
+			errorf("duplicate member %s", $1.s->name);
+		$1.s->nsue = nsue;
+		$$ = type(TMEMB, $1.t);
+		$$->sym = $1.s;
+	}
 |	decor ':' expr
 	{
-		$$ = new(OBIT, $1, $3);
+		/* ignore bit field for now */
+		if($1.s->nsue == nsue)
+			errorf("duplicate member %s", $1.s->name);
+		$1.s->nsue = nsue;
+		$$ = type(TMEMB, $1.t);
+		$$->sym = $1.s;
 	}
 
 sudecorlist:
 	sudecor
 |	sudecorlist ',' sudecor
 	{
-		$$ = new(OLIST, $1, $3);
+		$1->list = $3;
+		$$ = $1;
 	}
 
 enumbody:
@@ -442,6 +508,7 @@ stmt:
 	slist '}'
 	{
 		pop();
+		$$ = $<node>2;
 	}
 
 label:
@@ -458,9 +525,6 @@ slist:
      		$$ = NULL;	
 	}
 |	slist decl
-	{
-		$$ = new(OLIST, $1, $2);
-	}
 |	slist stmt
 	{
 		$$ = new(OLIST, $1, $2);

@@ -10,7 +10,6 @@ char		*lastname;
 Dstk		*declstk;
 unsigned	block;
 unsigned	nsue;
-Io		*io;
 Src		src;
 
 int main(int argc, char *argv[])
