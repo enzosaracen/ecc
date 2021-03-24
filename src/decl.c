@@ -414,8 +414,13 @@ void prtype(Type *t, int indent)
 	switch(t->ttype) {
 	case TSTRUCT:
 	case TUNION:
-		printf("width: %d\t", t->width);
-		/* fallthrough */
+		printf("width: %d ", t->width);
+		printf("%s\n", type2str(t->ttype));
+		while(t->list != NULL) {
+			prtype(t->list->sub, indent+1);
+			t = t->list;
+		}
+		break;
 	case TFUNC:
 		printf("%s\n", type2str(t->ttype));
 		for(i = 0; i < indent+1; i++)

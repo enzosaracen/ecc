@@ -64,6 +64,7 @@ xdecl:
 			idecl(p->sym, p->sub, CAUTO);
 		}
 		prtype($2.t, 0);
+		printf("------------\n");
 	}
 	'{' slist '}'
 	{
@@ -90,6 +91,10 @@ decl:
 
 dlist:
 	decor
+	{
+		prtype($1.t, 0);
+		printf("------------\n");
+	}
 |	decor '=' init
 |	dlist ',' dlist
 
@@ -316,7 +321,10 @@ suespec:
 	}
 	subody
 	{
-		$$->sub = $<type>3;
+		$$ = $<type>3;
+		$$->list = $4;
+		prtype($$, 0);
+		printf("------------\n");
 	}
 |	LSTRUCT
 	{
@@ -325,7 +333,7 @@ suespec:
 	subody
 	{
 		$$ = type(TSTRUCT, NULL);
-		$$->sub = $<type>2;
+		$$->list = $3;
 	}
 |	LUNION tag
 	{
@@ -334,13 +342,16 @@ suespec:
 	}
 |	LUNION tag
 	{
-		nsue++;
+		$<type>$ = type(TUNION, NULL);
 		tdecl($2, $<type>$);
+		nsue++;
 	}
 	subody 
 	{
-		$$ = type(TUNION, NULL);
-		$$->sub = $<type>3;
+		$$ = $<type>3;
+		$$->list = $4;
+		prtype($$, 0);
+		printf("------------\n");
 	}
 |	LUNION
 	{
@@ -349,7 +360,7 @@ suespec:
 	subody
 	{
 		$$ = type(TUNION, NULL);
-		$$->sub = $<type>2;
+		$$->list = $3;
 	}
 |	LENUM tag
 |	LENUM tag enumbody
