@@ -79,7 +79,9 @@ enum {
 	TFUNC,
 	TSTRUCT,
 	TUNION,
-	TMEMB,
+	TWRAP,	/* wrapper type to to store lists for members and parms
+		 * without causing modifications to the base types stored in types[]
+		 * note - there is probably a better solution to this */
 };
 
 enum {

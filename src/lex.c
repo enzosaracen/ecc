@@ -132,7 +132,7 @@ char next(void)
 		peek = NOPEEK;
 		return c;
 	} else if(iostk[nio]->fp == NULL) {
-		if(iostk[nio]->p == 0)
+		if(*iostk[nio]->p == 0)
 			goto pop;
 	} else if(--iostk[nio]->len < 0) {
 		iostk[nio]->len = fread(iostk[nio]->buf, 1, BUFSIZ, iostk[nio]->fp);
@@ -302,7 +302,7 @@ start:
 		break;
 	case '#':
 		pp();
-		break;
+		goto start;
 	default:
 		return c;
 	}
@@ -401,8 +401,10 @@ void ppname(void)
 	if(!isalpha(c) && c != '_')
 		errorf("macro names must be identifiers");
 	cp = lbuf;
-	while(isalnum(c) || c == '_')
+	while(isalnum(c) || c == '_') {
 		putbuf(cp++, c);
+		c = ppnext();
+	}
 	*cp = 0;
 	if(!isspace(c))
 		errorf("whitespace required after macro name");

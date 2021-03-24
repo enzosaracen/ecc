@@ -16,8 +16,7 @@ src/%.o:	src/%.c $(HFILES)
 ecc:	src/parse.o $(OBJ) $(HFILES)
 	$(CC) $(CFLAGS) $(OBJ) src/parse.o -o $@
 
-# this makefile is kind of messed up, if y.tab.h is removed yacc runs twice, need to fix
-src/y.tab.h src/cc.o:	src/parse.y src/u.h
+src/y.tab.h src/parse.o:	src/parse.y src/u.h
 	yacc -vd src/parse.y
 	mv -f y.tab.h y.tab.c src
 	$(CC) $(CFLAGS) -o src/parse.o -c src/y.tab.c

@@ -426,7 +426,7 @@ char *type2str(int ttype)
 	case TFUNC:	return "func";
 	case TSTRUCT:	return "struct";
 	case TUNION:	return "union";
-	case TMEMB:	return "member";
+	case TWRAP:	return "member/param";
 	default:
 		errorf("unrecognized ttype %d when printing type", ttype);
 	}
@@ -450,7 +450,7 @@ void prtype(Type *t, int indent)
 		prtype(t->sub, indent);
 		prtype(t->list, indent+1);
 		break;
-	case TMEMB:
+	case TWRAP:
 		printf("%s: ", type2str(t->ttype));
 		prtype(t->sub, indent);
 		prtype(t->list, indent);

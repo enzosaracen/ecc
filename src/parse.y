@@ -53,7 +53,6 @@ xdecl:
 			errorf("expected function type");
 		idecl($2.s, $2.t, lastclass);
 		push(NULL, DBLOCK);
-		/* link the types to the attached syms */
 		for(p = $2.t->list; p != NULL; p = p->list) {
 			if(p->sym == NULL) {
 				if(p->sub->ttype == TVOID)
@@ -151,35 +150,35 @@ parms:
 	{
 		if(lastclass != CNONE)
 			errorf("parameter declaration cannot have storage class");
-		$$ = $2;
-		switch($$->ttype) {
+		switch($2->ttype) {
 		case TFUNC:
-			$$ = type(TPTR, $$);
+			$2 = type(TPTR, $2);
 			break;
 		case TARRAY:
-			$$ = type(TPTR, $$->sub);
+			$2 = type(TPTR, $2->sub);
 			break;
 		}
+		$$ = type(TWRAP, $2);
 	}
 	/* attach syms to types we return because we do not know if it is a func def or not */
 |	tspec decor
 	{
 		if(lastclass != CNONE)
 			errorf("parameter declaration cannot have storage class");
-		$$ = $2.t;
-		switch($$->ttype) {
+		switch($2.t->ttype) {
 		case TFUNC:
-			$$ = type(TPTR, $$);
+			$2.t = type(TPTR, $2.t);
 			break;
 		case TARRAY:
-			$$ = type(TPTR, $$->sub);
+			$2.t = type(TPTR, $2.t->sub);
 			break;
 		}
+		$$ = type(TWRAP, $2.t);
 		$$->sym = $2.s;
 	}
 |	parms ',' parms
 	{
-		if($1->ttype == TVOID || $3->ttype == TVOID)
+		if($1->sub->ttype == TVOID || $3->sub->ttype == TVOID)
 			errorf("void must be the only parameter");
 		$$ = $1;
 		$1->list = $3->list;
@@ -381,7 +380,7 @@ sudecor:
 		if($1.s->nsue == nsue)
 			errorf("duplicate member %s", $1.s->name);
 		$1.s->nsue = nsue;
-		$$ = type(TMEMB, $1.t);
+		$$ = type(TWRAP, $1.t);
 		$$->sym = $1.s;
 	}
 |	decor ':' expr
@@ -390,7 +389,7 @@ sudecor:
 		if($1.s->nsue == nsue)
 			errorf("duplicate member %s", $1.s->name);
 		$1.s->nsue = nsue;
-		$$ = type(TMEMB, $1.t);
+		$$ = type(TWRAP, $1.t);
 		$$->sym = $1.s;
 	}
 
