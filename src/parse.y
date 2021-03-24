@@ -323,6 +323,7 @@ suespec:
 	{
 		$$ = $<type>3;
 		$$->list = $4;
+		$$->width = $4->width;
 		prtype($$, 0);
 		printf("------------\n");
 	}
@@ -334,6 +335,7 @@ suespec:
 	{
 		$$ = type(TSTRUCT, NULL);
 		$$->list = $3;
+		$$->width = $3->width;
 	}
 |	LUNION tag
 	{
@@ -350,6 +352,7 @@ suespec:
 	{
 		$$ = $<type>3;
 		$$->list = $4;
+		$$->width = $4->width;
 		prtype($$, 0);
 		printf("------------\n");
 	}
@@ -361,6 +364,7 @@ suespec:
 	{
 		$$ = type(TUNION, NULL);
 		$$->list = $3;
+		$$->width = $3->width;
 	}
 |	LENUM tag
 |	LENUM tag enumbody
@@ -374,9 +378,13 @@ subody:
 
 sudecllist:
 	sudecl
+	{
+		$$->width = $$->sub->width;
+	}
 |	sudecllist sudecl
 	{
-		$1->list = $2->list;
+		$1->list = $2;
+		$1->width += $2->sub->width;
 		$$ = $1;
 	}
 

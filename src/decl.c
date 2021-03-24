@@ -431,7 +431,7 @@ void prtype(Type *t, int indent)
 			printf("  ");
 		printf("params:\n");
 		while(t->list != NULL) {
-			prtype(t->sub, indent+2);
+			prtype(t->list->sub, indent+2);
 			t = t->list;
 		}
 		break;

@@ -77,7 +77,8 @@ enum {
 	TSTRUCT,
 	TUNION,
 	TWRAP,	/* wrapper type to store lists for members and parms
-		 * without causing modifications to the base types stored in types[]
+		 * without causing modifications to the base types stored in types[],
+		 * also allows incrementally building up struct and union width
 		 * note - there is probably a better solution to this */
 };
 
