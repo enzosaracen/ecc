@@ -9,10 +9,7 @@ Type *types[] = {
 	[TUINT]		= &(Type){.ttype = TUINT,		.width = 4},
 	[TLONG]		= &(Type){.ttype = TLONG,		.width = 8},
 	[TULONG]	= &(Type){.ttype = TULONG,		.width = 8},
-	[TLLONG]	= &(Type){.ttype = TLLONG,		.width = 8},
-	[TULLONG]	= &(Type){.ttype = TULLONG,		.width = 8},
 	[TFLOAT]	= &(Type){.ttype = TFLOAT,		.width = 4},
 	[TDOUBLE]	= &(Type){.ttype = TDOUBLE,		.width = 8},
-	[TLDOUBLE]	= &(Type){.ttype = TLDOUBLE,		.width = 8},
 	[TPTR]		= &(Type){.ttype = TPTR,		.width = 8},
 };

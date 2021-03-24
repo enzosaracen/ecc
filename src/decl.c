@@ -311,38 +311,6 @@ void pop(void)
 	}
 }
 
-void spec(int b)
-{
-	switch(b) {
-	case 0:
-		return;
-	case BAUTO:
-		b = CAUTO;
-		goto class;
-	case BEXTERN:
-		b = CEXTERN;
-		goto class;
-	case BREGISTER:
-		b = CAUTO;
-		goto class;
-	case BSTATIC:
-		b = CSTATIC;
-		goto class;
-	case BTYPEDEF:
-		b = CTYPEDEF;
-		goto class;
-	default:
-		if(bits & b)
-			errorf("duplicate types");
-		bits |= b;
-		return;
-	}
-class:
-	if(lastclass != CNONE)
-		errorf("multiple storage classes");
-	lastclass = b;
-}
-
 Type *btype(void)
 {
 	switch(bits) {
@@ -386,16 +354,21 @@ Type *btype(void)
 		lasttype = types[TFLOAT];
 		break;
 	case BDOUBLE:
-		lasttype = types[TDOUBLE];
-		break;
 	case BDOUBLE|BLONG:
-		lasttype = types[TLDOUBLE];
+		lasttype = types[TDOUBLE];
 		break;
 	default:
 		errorf("illegal combination of types");
 	}
 	bits = 0;
 	return lasttype;
+}
+
+void cspec(int c)
+{
+	if(lastclass != CNONE)
+		errorf("multiple storage classes");
+	lastclass = c;
 }
 
 int incomp(Type *t)
@@ -415,15 +388,13 @@ char *type2str(int ttype)
 	case TINT:	return "int";
 	case TUINT:	return "uint";
 	case TLONG:	return "long";
-	case TLLONG:	return "llong";
-	case TULLONG:	return "ullong";
+	case TULONG:	return "ulong";
 	case TFLOAT:	return "float";
 	case TDOUBLE:	return "double";
-	case TLDOUBLE:	return "ldouble";
 	case TPTR:	return "ptr";
 	case TARRAY:	return "array";
 	case TENUM:	return "enum";
-	case TFUNC:	return "func";
+	case TFUNC:	return "function";
 	case TSTRUCT:	return "struct";
 	case TUNION:	return "union";
 	case TWRAP:	return "member/param";
@@ -447,15 +418,20 @@ void prtype(Type *t, int indent)
 		/* fallthrough */
 	case TFUNC:
 		printf("%s\n", type2str(t->ttype));
-		prtype(t->sub, indent);
-		prtype(t->list, indent+1);
-		break;
-	case TWRAP:
-		printf("%s: ", type2str(t->ttype));
-		prtype(t->sub, indent);
-		prtype(t->list, indent);
+		for(i = 0; i < indent+1; i++)
+			printf("  ");
+		printf("ret:\n");
+		prtype(t->sub, indent+2);
+		for(i = 0; i < indent+1; i++)
+			printf("  ");
+		printf("params:\n");
+		while(t->list != NULL) {
+			prtype(t->sub, indent+2);
+			t = t->list;
+		}
 		break;
 	default:
+		printf("%s\n", type2str(t->ttype));
 		prtype(t->sub, indent+1);
 		prtype(t->list, indent);
 		break;

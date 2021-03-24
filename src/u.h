@@ -68,18 +68,15 @@ enum {
 	TUINT,
 	TLONG,
 	TULONG,
-	TLLONG,
-	TULLONG,
 	TFLOAT,
 	TDOUBLE,
-	TLDOUBLE,
 	TPTR,
 	TARRAY,
 	TENUM,
 	TFUNC,
 	TSTRUCT,
 	TUNION,
-	TWRAP,	/* wrapper type to to store lists for members and parms
+	TWRAP,	/* wrapper type to store lists for members and parms
 		 * without causing modifications to the base types stored in types[]
 		 * note - there is probably a better solution to this */
 };
@@ -253,7 +250,7 @@ void	tdecl(Sym *, Type *);
 /*Type	*ptype(Node *);*/
 void	push(Sym *, int);
 void	pop(void);
-void	spec(int);
+void	cspec(int);
 Type	*btype(void);
 int	incomp(Type *t);
 char	*type2str(int);

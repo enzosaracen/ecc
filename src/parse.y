@@ -63,6 +63,7 @@ xdecl:
 				errorf("parameter %s has incomplete type", p->sym->name);
 			idecl(p->sym, p->sub, CAUTO);
 		}
+		prtype($2.t, 0);
 	}
 	'{' slist '}'
 	{
@@ -112,7 +113,7 @@ decor:
 ddecor:
 	id
 	{
-		$$.t = NULL;
+		$$.t = lasttype;
 		$$.s = $1->sym;
 	}
 |	'(' decor ')'
@@ -142,10 +143,12 @@ ddecor:
 |	ddecor '(' ')'
 	{
 		$$.t = type(TFUNC, $1.t);
+		$$.t->list = type(TWRAP, types[TVOID]);
 		$$.s = $1.s;
 	}
 
 parms:
+     	/* parameter names without explicit types are not allowed */
 	tspec oadecor
 	{
 		if(lastclass != CNONE)
@@ -181,7 +184,7 @@ parms:
 		if($1->sub->ttype == TVOID || $3->sub->ttype == TVOID)
 			errorf("void must be the only parameter");
 		$$ = $1;
-		$1->list = $3->list;
+		$1->list = $3;
 	}
 |	parms ',' '.' '.' '.'
 	{
@@ -436,61 +439,61 @@ qname:
 cname:
       	LAUTO
 	{
-		spec(BAUTO);
+		cspec(CAUTO);
 	}
 |	LREGISTER
 	{
-		spec(BREGISTER);
+		cspec(CAUTO);
 	}
 |	LSTATIC
 	{
-		spec(BSTATIC);
+		cspec(CSTATIC);
 	}
 |	LEXTERN
 	{
-		spec(BEXTERN);
+		cspec(CEXTERN);
 	}
 |	LTYPEDEF
 	{
-		spec(BTYPEDEF);
+		cspec(CTYPEDEF);
 	}
 
 tname:
      	LVOID
 	{
-		spec(BVOID);
+		bits |= BVOID;
 	}
 |	LCHAR
 	{
-		spec(BCHAR);
+		bits |= BCHAR;
 	}
 |	LSHORT
 	{
-		spec(BSHORT);
+		bits |= BSHORT;
 	}
 |	LINT
 	{
-		spec(BINT);
+		bits |= BINT;
 	}
 |	LLONG
 	{
-		spec(BLONG);
+		bits |= BLONG;
 	}
 |	LFLOAT
 	{
-		spec(BFLOAT);
+		bits |= BFLOAT;
 	}
 |	LDOUBLE
 	{
-		spec(BDOUBLE);
+		bits |= BDOUBLE;
 	}
 |	LSIGNED
 	{
-		spec(BSIGNED);
+		bits |= BSIGNED;
 	}
 |	LUNSIGNED
 	{
-		spec(BUNSIGNED);
+		bits |= BUNSIGNED;
 	}
 
 

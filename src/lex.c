@@ -59,6 +59,7 @@ void lexinit(void)
 
 	peek = NOPEEK;
 	oldpeek = NOPEEK;
+	src.line = 1;
 	for(i = 0; rsvd[i].s; i++) {
 		for(j = 0; rsvd[i].s[j]; j++)
 			lbuf[j] = rsvd[i].s[j];
