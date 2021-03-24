@@ -2,6 +2,7 @@
 
 Type *types[] = {
 	[TVOID]		= &(Type){.ttype = TVOID},
+	[TCHAR]		= &(Type){.ttype = TCHAR,		.width = 1},
 	[TUCHAR]	= &(Type){.ttype = TUCHAR,		.width = 1},
 	[TSHORT]	= &(Type){.ttype = TSHORT,		.width = 2},
 	[TUSHORT]	= &(Type){.ttype = TUSHORT,		.width = 2},

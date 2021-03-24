@@ -127,7 +127,7 @@ void pushio(FILE *fp, char *buf, int len)
 char next(void)
 {
 	char c;
-	
+
 	if(peek != NOPEEK) {
 		c = peek;
 		peek = NOPEEK;
@@ -154,7 +154,7 @@ pop:
 		c = oldpeek;
 		oldpeek = NOPEEK;
 		return c;
-	} else if(nio >= 0) {
+	} else if(nio > 1) {
 		popio();
 		return next();
 	} else
