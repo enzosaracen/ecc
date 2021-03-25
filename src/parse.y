@@ -59,12 +59,10 @@ xdecl:
 					break;
 				errorf("parameter name needed in function definition");
 			}
-			if(incomp(p->sub))
+			if(p->sub->width == 0)
 				errorf("parameter %s has incomplete type", p->sym->name);
 			idecl(p->sym, p->sub, CAUTO);
 		}
-		prtype($2.t, 0);
-		printf("------------\n");
 	}
 	'{' slist '}'
 	{
@@ -91,10 +89,6 @@ decl:
 
 dlist:
 	decor
-	{
-		prtype($1.t, 0);
-		printf("------------\n");
-	}
 |	decor '=' init
 |	dlist ',' dlist
 
@@ -141,15 +135,15 @@ ddecor:
 	}
 |	ddecor '(' parms ')'
 	{
+		$$.s = $1.s;
 		$$.t = type(TFUNC, $1.t);
 		$$.t->list = $3;
-		$$.s = $1.s;
 	}
 |	ddecor '(' ')'
 	{
+		$$.s = $1.s;
 		$$.t = type(TFUNC, $1.t);
 		$$.t->list = type(TWRAP, types[TVOID]);
-		$$.s = $1.s;
 	}
 
 parms:
@@ -324,8 +318,6 @@ suespec:
 		$$ = $<type>3;
 		$$->list = $4;
 		$$->width = $4->width;
-		prtype($$, 0);
-		printf("------------\n");
 	}
 |	LSTRUCT
 	{
@@ -353,8 +345,6 @@ suespec:
 		$$ = $<type>3;
 		$$->list = $4;
 		$$->width = $4->width;
-		prtype($$, 0);
-		printf("------------\n");
 	}
 |	LUNION
 	{
@@ -549,52 +539,63 @@ slist:
 |	slist stmt
 	{
 		$$ = new(OLIST, $1, $2);
+		$$ = ntype($$);
 	}
 
 sel:
 	LIF '(' expr ')' stmt
 	{
 		$$ = new(OIF, $3, $5);
+		$$ = ntype($$);
 	}
 |	LIF '(' expr ')' stmt LELSE stmt
 	{
 		$$ = new(OIF, $3, new(OLIST, $5, $7));
+		$$ = ntype($$);
 	}
 |	LSWITCH '(' expr ')' stmt
 	{
 		$$ = new(OSWITCH, $3, $5);
+		$$ = ntype($$);
 	}
 
 iter:
 	LWHILE '(' expr ')' stmt
 	{
 		$$ = new(OWHILE, $3, $5);
+		$$ = ntype($$);
 	}
 |	LDO stmt LWHILE '(' expr ')' ';'
 	{
 		$$ = new(ODOWHILE, $2, $5);
+		$$ = ntype($$);
 	}
 |	LFOR '(' oexpr ';' oexpr ';' oexpr ')' stmt
 	{
 		$$ = new(OFOR, $3, new(OLIST, $5, new(OLIST, $7, $9)));
+		$$ = ntype($$);
 	}
 
 jmp:
 	LGOTO id ';'
 	{
 		$$ = new(OGOTO, $2, NULL);
+		$$ = ntype($$);
 	}
 |	LCONTINUE ';'
 	{
 		$$ = new(OCONTINUE, NULL, NULL);
+		$$ = ntype($$);
 	}
 |	LBREAK ';'
 	{
 		$$ = new(OBREAK, NULL, NULL);
+		$$ = ntype($$);
 	}
 |	LRETURN oexpr ';'
 	{
 		$$ = new(ORETURN, $2, NULL);
+		$$ = ntype($$);
 	}
 
 exprlist:
@@ -602,6 +603,7 @@ exprlist:
 |	exprlist ',' exprlist
 	{
 		$$ = new(OLIST, $1, $3);
+		$$ = ntype($$);
 	}
 
 expr:
@@ -609,122 +611,152 @@ expr:
 |	expr '*' expr
 	{
 		$$ = new(OMUL, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr '/' expr
 	{
 		$$ = new(ODIV, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr '%' expr
 	{
 		$$ = new(OMOD, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr '+' expr
 	{
 		$$ = new(OADD, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr '-' expr
 	{
 		$$ = new(OSUB, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LLSH expr
 	{
 		$$ = new(OLSH, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LRSH expr
 	{
 		$$ = new(ORSH, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr '<' expr
 	{
 		$$ = new(OLT, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LLE expr
 	{
 		$$ = new(OLE, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr '>' expr
 	{
 		$$ = new(OGT, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LGE expr
 	{
 		$$ = new(OGE, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LEQ expr
 	{
 		$$ = new(OEQ, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LNE expr
 	{
 		$$ = new(ONE, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr '&' expr
 	{
 		$$ = new(OAND, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr '^' expr
 	{
 		$$ = new(OXOR, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr '|' expr
 	{
 		$$ = new(OOR, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LANDAND expr
 	{
 		$$ = new(OANDAND, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LOROR expr
 	{
 		$$ = new(OOROR, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr '=' expr
 	{
 		$$ = new(OAS, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LADDAS expr
 	{
 		$$ = new(OADDAS, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LSUBAS expr
 	{
 		$$ = new(OSUBAS, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LMULAS expr
 	{
 		$$ = new(OMULAS, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LDIVAS expr
 	{
 		$$ = new(ODIVAS, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LMODAS expr
 	{
 		$$ = new(OMODAS, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LLSHAS expr
 	{
 		$$ = new(OLSHAS, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LRSHAS expr
 	{
 		$$ = new(ORSHAS, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LANDAS expr
 	{
 		$$ = new(OANDAS, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LXORAS expr
 	{
 		$$ = new(OXORAS, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr LORAS expr
 	{
 		$$ = new(OORAS, $1, $3);
+		$$ = ntype($$);
 	}
 |	expr '?' expr ':' expr
 	{
 		$$ = new(OCOND, $1, new(OLIST, $3, $5));
+		$$ = ntype($$);
 	}
 
 cast:
@@ -733,49 +765,60 @@ cast:
 	{
 		$$ = new(OCAST, $4, NULL);
 		$$->type = lasttype;
+		$$ = ntype($$);
 	}
 uexpr:
 	pexpr
 |	LINC uexpr
 	{
 		$$ = new(OPREINC, $2, NULL);
+		$$ = ntype($$);
 	}
 |	LDEC uexpr
 	{
 		$$ = new(OPREDEC, $2, NULL);
+		$$ = ntype($$);
 	}
 |	'&' cast
 	{
 		$$ = new(OADDR, $2, NULL);
+		$$ = ntype($$);
 	}
 |	'*' cast
 	{
 		$$ = new(OIND, $2, NULL);
+		$$ = ntype($$);
 	}
 |	'+' cast
 	{
 		$$ = new(OPOS, $2, NULL);
+		$$ = ntype($$);
 	}
 |	'-' cast
 	{
 		$$ = new(ONEG, $2, NULL);
+		$$ = ntype($$);
 	}
 |	'~' cast
 	{
 		$$ = new(OBNOT, $2, NULL);
+		$$ = ntype($$);
 	}
 |	'!' cast
 	{
 		$$ = new(ONOT, $2, NULL);
+		$$ = ntype($$);
 	}
 |	LSIZEOF uexpr
 	{
 		$$ = new(OSIZEOF, $2, NULL);
+		$$ = ntype($$);
 	}
 |	LSIZEOF '(' tspec ')'
 	{
 		$$ = new(OSIZEOF, NULL, NULL);
 		$$->type = lasttype;
+		$$ = ntype($$);
 	}
 	
 pexpr:
@@ -786,37 +829,47 @@ pexpr:
 |	pexpr '[' expr ']'
 	{
 		$$ = new(OIND, new(OADD, $1, $3), NULL);
+		$$ = ntype($$);
 	}
 |	pexpr '(' oelist ')'
 	{
 		$$ = new(OFUNC, $1, $3);
+		$$ = ntype($$);
 	}
-|	pexpr '.' id
+|	pexpr '.' tag
 	{
-		$$ = new(ODOT, $1, $3);
+		$$ = new(ODOT, $1, NULL);
+		$$->sym = $3;
+		$$ = ntype($$);
 	}
-|	pexpr LARROW id
+|	pexpr LARROW tag
 	{
-		$$ = new(OARROW, $1, $3);
+		$$ = new(OARROW, $1, NULL);
+		$$->sym = $3;
+		$$ = ntype($$);
 	}
 |	pexpr LINC
 	{
 		$$ = new(OPOSTINC, $1, NULL);
+		$$ = ntype($$);
 	}
 |	pexpr LDEC
 	{
 		$$ = new(OPOSTDEC, $1, NULL);
+		$$ = ntype($$);
 	}
 |	id
 |	LNUM
 	{
 		$$ = new(OCONST, NULL, NULL);
 		$$->lval = $1;
+		$$ = ntype($$);
 	}
 |	LSTRING	
 	{
 		$$ = new(OSTRING, NULL, NULL);
 		$$->sval = $1;
+		$$ = ntype($$);
 	}
 
 oexpr:
@@ -830,6 +883,7 @@ oelist:
 |	oelist ',' oelist
 	{
 		$$ = new(OLIST, $1, $3);
+		$$ = ntype($$);
 	}
 
 tag:
@@ -841,5 +895,6 @@ id:
 	{
 		$$ = new(OID, NULL, NULL);
 		$$->sym = $1;
+		$$ = ntype($$);
 	}
 %%

@@ -78,7 +78,8 @@ enum {
 	TUNION,
 	TWRAP,	/* wrapper type to store lists for members and parms
 		 * without causing modifications to the base types stored in types[],
-		 * also allows incrementally building up struct and union width
+		 * also allows incrementally building up struct and union width,
+		 * which consequently provides offsets for members
 		 * note - there is probably a better solution to this */
 };
 
@@ -97,7 +98,6 @@ struct Type {
 	Type		*sub;
 	Sym		*sym;
 	Type		*list;
-	unsigned	offset;
 };
 
 enum {
@@ -137,7 +137,6 @@ enum {
 	OLSH,
 	OLSHAS,
 	OLT,
-	OMEMB,
 	OMOD,
 	OMODAS,
 	OMUL,
@@ -148,7 +147,6 @@ enum {
 	OOR,
 	OORAS,
 	OOROR,
-	OPARM,
 	OPOS,
 	OPOSTDEC,
 	OPOSTINC,
@@ -229,31 +227,25 @@ void	ppdefine(void);
 void	ppundef(void);
 
 /*
- * 	ast.c
+ * 	types.c
  */
+Type	*type(int, Type *);
+int	sametype(Type *, Type *);
+void	idecl(Sym *, Type *, int );
+void	ldecl(Sym *, Node *);
+void	tdecl(Sym *, Type *);
+void	push(Sym *, int);
+void	pop(void);
+Type	*btype(void);
+void	cspec(int);
+int	islval(Node *);
+Type	*getmemb(Type *t, Sym *s);
 Node	*new(int, Node *, Node *);
+Node	*ntype(Node *);
 void	freenode(Node *);
 Node	*fold(Node *);
 char	*op2str(int);
 void	prtree(Node *, int);
-
-/*
- * 	decl.c
- */
-Type	*type(int, Type *);
-int	sametype(Type *, Type *);
-/*Type	*decor(Node *, Type *, int, int, Sym **);*/
-void	idecl(Sym *, Type *, int );
-void	ldecl(Sym *, Node *);
-void	tdecl(Sym *, Type *);
-/*Type	*sdecl(Node *, Type *, Type *);*/
-/*void	pdecl(Node *, Type *);*/
-/*Type	*ptype(Node *);*/
-void	push(Sym *, int);
-void	pop(void);
-void	cspec(int);
-Type	*btype(void);
-int	incomp(Type *t);
 char	*type2str(int);
 void	prtype(Type *, int);
 

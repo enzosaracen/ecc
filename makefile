@@ -2,8 +2,7 @@ CC 	= gcc
 CFLAGS	= -Wall -Wextra -ggdb3 -std=c89
 OBJ	= src/lex.o \
 	  src/util.o \
-	  src/ast.o \
-	  src/decl.o \
+	  src/types.o \
 	  src/amd64.o \
 	  src/main.o
 
