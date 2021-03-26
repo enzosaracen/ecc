@@ -9,7 +9,7 @@
 char	peek;
 char	oldpeek;
 char	lbuf[NLBUF];
-Sym	*syms[NHASH];
+Sym	*hash[NHASH];
 Io	*iostk[NIO];
 int	nio;
 
@@ -81,7 +81,7 @@ Sym *lookup(void)
 		h = ((h << 5) + h) + c;
 	h %= NHASH;
 	c = lbuf[0];
-	for(s = syms[h]; s; s = s->next) {
+	for(s = hash[h]; s; s = s->next) {
 		if(s->name[0] != c)
 			continue;
 		if(strcmp(s->name, lbuf) == 0)
@@ -90,8 +90,8 @@ Sym *lookup(void)
 	s = emalloc(sizeof(Sym));
 	s->name = estrdup(lbuf);
 	lastname = s->name;
-	s->next = syms[h];
-	syms[h] = s;
+	s->next = hash[h];
+	hash[h] = s;
 	s->type = NULL;
 	s->label = NULL;
 	s->tag = NULL;
@@ -107,7 +107,7 @@ void popio(void)
 {
 	if(nio < 0)
 		errorf("cannot pop off iostack...");
-	free(iostk[nio--]);
+	nio--;
 }
 
 void pushio(FILE *fp, char *buf, int len)

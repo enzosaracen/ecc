@@ -1,9 +1,6 @@
 #include "u.h"
 #include "y.tab.h"
 
-/*
- *	declarations
- */
 Type *type(int ttype, Type *sub)
 {
 	Type *t;
@@ -17,34 +14,20 @@ Type *type(int ttype, Type *sub)
 	return t;
 }
 
-int sametype(Type *t, Type *t2)
+Node *new(int op, Node *l, Node *r)
 {
-	if(t == t2)
-		return 1;
-	if(t->ttype == t2->ttype) {
-		switch(t->ttype) {
-		case TFUNC:
-			if(!sametype(t->sub, t2->sub))
-				return 0;
-			/* fallthrough */
-		case TUNION:
-		case TSTRUCT:
-			while(t->list != NULL && t2->list != NULL) {
-				if(!sametype(t->list, t2->list))
-					return 0;
-				t = t->list;
-				t2 = t2->list;
-			}
-			return 1;
-		case TPTR:
-		case TARRAY:
-			return sametype(t->sub, t2->sub);
-		default:
-			return 1;
-		}
-	}
-	return 0;
+	Node *n;
+
+	n = emalloc(sizeof(Node));
+	n->op = op;
+	n->l = l;
+	n->r = r;
+	return n;
 }
+
+/*
+ *	declarations
+ */
 void idecl(Sym *s, Type *t, int c)
 {
 	if(block == 0) {
@@ -121,26 +104,22 @@ void pop(void)
 		switch(d->dtype) {
 		case DBLOCK:
 			block--;
-			free(d);
 			return;
 		case DTAG:
 			s = d->sym;
 			s->tag = d->type;
 			s->block = d->block;
-			free(d);
 			break;
 		case DLABEL:
 			s = d->sym;
 			s->label = d->label;
 			s->block = d->block;
-			free(d);
 			break;
 		case DOTHER:
 			s = d->sym;
 			s->type = d->type;
 			s->class = d->class;
 			s->block = d->block;
-			free(d);
 			break;
 		}
 	}
@@ -209,6 +188,35 @@ void cspec(int c)
 /*
  *	expressions
  */
+int sametype(Type *t, Type *t2)
+{
+	if(t == t2)
+		return 1;
+	if(t->ttype == t2->ttype) {
+		switch(t->ttype) {
+		case TFUNC:
+			if(!sametype(t->sub, t2->sub))
+				return 0;
+			/* fallthrough */
+		case TUNION:
+		case TSTRUCT:
+			while(t->list != NULL && t2->list != NULL) {
+				if(!sametype(t->list->sub, t2->list->sub))
+					return 0;
+				t = t->list;
+				t2 = t2->list;
+			}
+			return 1;
+		case TPTR:
+		case TARRAY:
+			return sametype(t->sub, t2->sub);
+		default:
+			return 1;
+		}
+	}
+	return 0;
+}
+
 int islval(Node *n)
 {
 	switch(n->op) {
@@ -221,6 +229,12 @@ int islval(Node *n)
 	return 0;
 }
 
+void uaconv(Node *n)
+{
+	int lt, rt;
+
+}
+
 Type *getmemb(Type *t, Sym *s)
 {
 	while(t->list != NULL) {
@@ -229,17 +243,6 @@ Type *getmemb(Type *t, Sym *s)
 		t = t->list;
 	}
 	return NULL;
-}
-
-Node *new(int op, Node *l, Node *r)
-{
-	Node *n;
-
-	n = emalloc(sizeof(Node));
-	n->op = op;
-	n->l = l;
-	n->r = r;
-	return n;
 }
 
 Node *ntype(Node *n)
@@ -307,15 +310,6 @@ Node *ntype(Node *n)
 		break;
 	}
 	return n;
-}
-
-void freenode(Node *n)
-{
-	if(n == NULL)
-		return;
-	freenode(n->l);
-	freenode(n->r);
-	free(n);
 }
 
 Node *fold(Node *n)
@@ -442,7 +436,6 @@ unop:
 		goto ret;
 	}
 ret:
-	freenode(n);
 	n = new(OCONST, NULL, NULL);
 	n->lval = l;
 	return n;

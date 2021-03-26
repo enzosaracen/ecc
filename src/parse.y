@@ -15,7 +15,7 @@
 
 %type	<node>	oelist oexpr pexpr uexpr cast expr exprlist jmp iter sel stmt
 %type	<node>	id ilist init label slist
-%type	<type>	suespec tspec otspec sudecor sudecorlist sudecl sudecllist subody oadecor adecor dadecor parms
+%type	<type>	suespec tspec otspec sudecor sdlist udlist sudecl sudlist sbody ubody oadecor adecor dadecor parms
 %type	<syty>	decor ddecor
 %type	<sym>	tag
 
@@ -130,7 +130,6 @@ ddecor:
 			else if($3->lval < 0)
 				errorf("array size muust be positive");
 			$$.t->width = $3->lval * $$.t->sub->width;
-			freenode($3);
 		}
 	}
 |	ddecor '(' parms ')'
@@ -222,7 +221,6 @@ dadecor:
 			else if($2->lval < 0)
 				errorf("array size muust be positive");
 			$$->width = $2->lval * $$->sub->width;
-			freenode($2);
 		}
 	}
 |	'(' parms ')'
@@ -240,7 +238,6 @@ dadecor:
 			else if($3->lval < 0)
 				errorf("array size muust be positive");
 			$$->width = $3->lval * $$->sub->width;
-			freenode($3);
 		}
 	}
 |	dadecor '(' parms ')'
@@ -313,7 +310,7 @@ suespec:
 		tdecl($2, $<type>$);
 		nsue++;
 	}
-	subody
+	sbody
 	{
 		$$ = $<type>3;
 		$$->list = $4;
@@ -323,7 +320,7 @@ suespec:
 	{
 		nsue++;
 	}
-	subody
+	sbody
 	{
 		$$ = type(TSTRUCT, NULL);
 		$$->list = $3;
@@ -340,7 +337,7 @@ suespec:
 		tdecl($2, $<type>$);
 		nsue++;
 	}
-	subody 
+	ubody 
 	{
 		$$ = $<type>3;
 		$$->list = $4;
@@ -350,7 +347,7 @@ suespec:
 	{
 		nsue++;
 	}
-	subody
+	ubody
 	{
 		$$ = type(TUNION, NULL);
 		$$->list = $3;
@@ -360,26 +357,45 @@ suespec:
 |	LENUM tag enumbody
 |	LENUM enumbody
 
-subody:
-	'{' sudecllist '}'
+sbody:
+	'{' sdlist '}'
 	{
 		$$ = $2;
 	}
 
-sudecllist:
+sdlist:
 	sudecl
 	{
 		$$->width = $$->sub->width;
 	}
-|	sudecllist sudecl
+|	sudlist sudecl
 	{
 		$1->list = $2;
 		$1->width += $2->sub->width;
 		$$ = $1;
 	}
 
+ubody:
+	'{' udlist '}'
+	{
+		$$ = $2;
+	}
+
+udlist:
+	sudecl
+	{
+		$$->width = $$->sub->width;
+	}
+|	sudlist sudecl
+	{
+		$1->list = $2;
+		if($2->sub->width > $1->width)
+			$1->width = $2->sub->width;
+		$$ = $1;
+	}
+
 sudecl:
-	tspec sudecorlist ';'
+	tspec sudlist ';'
 	{
 		if(lastclass != CNONE)
 			errorf("member cannot have storage class");
@@ -405,9 +421,9 @@ sudecor:
 		$$->sym = $1.s;
 	}
 
-sudecorlist:
+sudlist:
 	sudecor
-|	sudecorlist ',' sudecor
+|	sudlist ',' sudecor
 	{
 		$1->list = $3;
 		$$ = $1;
@@ -761,11 +777,14 @@ expr:
 
 cast:
 	uexpr
-|	'(' tspec ')' cast
+|	'(' tspec oadecor ')' cast
 	{
-		$$ = new(OCAST, $4, NULL);
-		$$->type = lasttype;
-		$$ = ntype($$);
+		$$ = $5;
+		if(!sametype($5->type, lasttype)) {
+			$$ = new(OCAST, $5, NULL);
+			$$->type = lasttype;
+			$$ = ntype($$);
+		}
 	}
 uexpr:
 	pexpr

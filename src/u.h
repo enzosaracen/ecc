@@ -81,6 +81,7 @@ enum {
 		 * also allows incrementally building up struct and union width,
 		 * which consequently provides offsets for members
 		 * note - there is probably a better solution to this */
+	NTTYPE,
 };
 
 enum {
@@ -242,7 +243,6 @@ int	islval(Node *);
 Type	*getmemb(Type *t, Sym *s);
 Node	*new(int, Node *, Node *);
 Node	*ntype(Node *);
-void	freenode(Node *);
 Node	*fold(Node *);
 char	*op2str(int);
 void	prtree(Node *, int);
@@ -259,3 +259,4 @@ extern	Dstk		*declstk;
 extern	unsigned	block;
 extern	unsigned	nsue;
 extern	Src		src;
+extern	int		isflt[], isint[];
