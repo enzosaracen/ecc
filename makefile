@@ -1,5 +1,5 @@
 CC 	= gcc
-CFLAGS	= -Wall -Wextra -ggdb3 -std=c89
+CFLAGS	= -Wall -Wextra -ggdb3
 OBJ	= src/lex.o \
 	  src/util.o \
 	  src/type.o \

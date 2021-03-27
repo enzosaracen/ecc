@@ -10,6 +10,10 @@ typedef struct Sym Sym;
 typedef struct Dstk Dstk;
 typedef struct Type Type;
 typedef struct Node Node;
+typedef struct Adr Adr;
+typedef struct Reg Reg;
+
+
 
 struct Src {
 	char	*name;
@@ -26,21 +30,17 @@ struct Sym {
 	int		lex;
 	Type		*type;
 	Type		*tag;
-	Node		*label;
+	char		*label;
+	Node		*init;
 	char		*name;
 	int		class;
 	unsigned	block;
 	unsigned	nsue;
 	char		*mac;
 	Sym		*next;
+	Adr		*adr;
 };
 
-/*
- * new decls in blocks overwrite syms in the hash table,
- * but the old sym info is saved on the decl stack, and on
- * block exit decls from the decl stack are popped and the
- * syms are restored to their previous values
- */
 enum {
 	DOTHER,
 	DTAG,
@@ -53,7 +53,7 @@ struct Dstk {
 	Type		*type;
 	int		class;
 	int		dtype;
-	Node		*label;
+	char		*label;
 	unsigned	block;
 	Dstk		*prev;
 };
@@ -133,6 +133,7 @@ enum {
 	OID,
 	OIF,
 	OIND,
+	OLABEL,
 	OLE,
 	OLIST,
 	OLSH,
@@ -199,6 +200,11 @@ enum {
 	SMEMB,
 };
 
+struct Reg {
+	Sym *sym;
+	Sym *next;
+};
+
 /* 
  *	util.c
  */
@@ -231,9 +237,10 @@ void	ppundef(void);
  * 	types.c
  */
 Type	*type(int, Type *);
+char	*newlabel(void);
 int	sametype(Type *, Type *);
 void	idecl(Sym *, Type *, int );
-void	ldecl(Sym *, Node *);
+void	ldecl(Sym *);
 void	tdecl(Sym *, Type *);
 void	push(Sym *, int);
 void	pop(void);
@@ -249,7 +256,7 @@ void	prtree(Node *, int);
 char	*type2str(int);
 void	prtype(Type *, int);
 
-extern	FILE		*outfile;
+extern	FILE		*outfp;
 extern	int		bits;
 extern	int		lastclass;
 extern	Type		*lasttype;
@@ -259,4 +266,3 @@ extern	Dstk		*declstk;
 extern	unsigned	block;
 extern	unsigned	nsue;
 extern	Src		src;
-extern	int		isflt[], isint[];

@@ -1,6 +1,8 @@
 #include "u.h"
 #include "y.tab.h"
 
+int nlabel;
+
 Type *type(int ttype, Type *sub)
 {
 	Type *t;
@@ -17,12 +19,30 @@ Type *type(int ttype, Type *sub)
 Node *new(int op, Node *l, Node *r)
 {
 	Node *n;
+	int el, er;
 
 	n = emalloc(sizeof(Node));
 	n->op = op;
 	n->l = l;
 	n->r = r;
+	n->sym = NULL;
+	n->type = NULL;
 	return n;
+}
+
+char *newlabel(void)
+{
+	int n;
+	char *s;
+
+	n = snprintf(NULL, 0, ".L%d", nlabel);
+	if(n < 0)
+		goto err;
+	s = emalloc(n);
+	if(snprintf(s, n, ".L%d", nlabel) < 0)
+err:		errorf("snprintf error...");
+	nlabel++;
+	return s;
 }
 
 /*
@@ -53,14 +73,14 @@ void idecl(Sym *s, Type *t, int c)
 	s->block = block;
 }
 
-void ldecl(Sym *s, Node *n)
+void ldecl(Sym *s)
 {
 	if(s->label != NULL) {
 		if(s->block == block)
 			errorf("redeclaration of label %s", s->name);
 		push(s, DLABEL);
 	}
-	s->label = n;
+	s->label = newlabel();
 	s->block = block;
 }
 
@@ -82,15 +102,23 @@ void push(Sym *s, int dtype)
 	d = emalloc(sizeof(Dstk));
 	d->dtype = dtype;
 	d->prev = declstk;
-	if(dtype == DBLOCK)
+	declstk = d;
+	switch(d->dtype) {
+	case DBLOCK:
 		block++;
-	else {
-		d->sym = s;
+		return;
+	case DTAG:
+		d->type = s->tag;
+		break;
+	case DLABEL:
+		d->label = s->label;
+		break;
+	case DOTHER:
 		d->type = s->type;
 		d->class = s->class;
-		d->block = s->block;
+		break;
 	}
-	declstk = d;
+	d->block = s->block;
 }
 
 void pop(void)
@@ -478,6 +506,7 @@ char *op2str(int op)
 	case OID:	return "id: ";
 	case OIF:	return "if";
 	case OIND:	return "*";
+	case OLABEL:	return "label";
 	case OLE:	return "<=";
 	case OLIST:	return ",";
 	case OLSH:	return "<<";

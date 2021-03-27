@@ -2,7 +2,7 @@
 
 #define MAX 32
 
-FILE		*outfile;
+FILE		*outfp;
 int		bits;
 int		lastclass;
 Type		*lasttype;
@@ -15,10 +15,10 @@ Src		src;
 int main(int argc, char *argv[])
 {
 	int i;
-	char *p, *bufp, **filesp, buf[MAX], *files[MAX], *outname;
+	char *p, *bufp, **fsp, buf[MAX], *files[MAX], *outname;
 
 	outname = NULL;
-	filesp = files;
+	fsp = files;
 	if(argc < 2)
 		panic("usage: ecc [-options] files");
 	for(i = 1; i < argc; i++) {
@@ -47,15 +47,18 @@ int main(int argc, char *argv[])
 			}
 			continue;
 		} else {
-			if(filesp-files >= MAX-1)
+			if(fsp-files >= MAX-1)
 				panic("too many input files");
-			*filesp++ = argv[i];
+			*fsp++ = argv[i];
 		}
 	}
-	*filesp = 0;
+	*fsp = 0;
 	if(outname == NULL)
 		outname = "a.out";
-	for(filesp = files; *filesp; filesp++)
-		compile(*filesp);
+	outfp = fopen(outname, "w");
+	if(outfp == NULL)
+		panic("cannot open %s for writing", outname);
+	for(fsp = files; *fsp; fsp++)
+		compile(*fsp);
 	return 0;
 }

@@ -89,7 +89,14 @@ decl:
 
 dlist:
 	decor
+	{
+		idecl($1.s, $1.t, lastclass);
+	}
 |	decor '=' init
+	{
+		$1.s->init = $3;
+		idecl($1.s, $1.t, lastclass);
+	}
 |	dlist ',' dlist
 
 init:
@@ -161,7 +168,6 @@ parms:
 		}
 		$$ = type(TWRAP, $2);
 	}
-	/* attach syms to types we return because we do not know if it is a func def or not */
 |	tspec decor
 	{
 		if(lastclass != CNONE)
@@ -535,14 +541,15 @@ stmt:
 	slist '}'
 	{
 		pop();
-		$$ = $<node>2;
+		$$ = $3;
 	}
 
 label:
 	LID ':' stmt
 	{
-		ldecl($1, $3);
-		$$ = $3;
+		ldecl($1);
+		$$ = new(OLABEL, $3, NULL);
+		$$->sym = $1;
 	}
 |	LCASE expr ':' stmt
 |	LDEFAULT ':' stmt
