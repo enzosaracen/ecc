@@ -10,10 +10,6 @@ typedef struct Sym Sym;
 typedef struct Dstk Dstk;
 typedef struct Type Type;
 typedef struct Node Node;
-typedef struct Adr Adr;
-typedef struct Reg Reg;
-
-
 
 struct Src {
 	char	*name;
@@ -38,7 +34,6 @@ struct Sym {
 	unsigned	nsue;
 	char		*mac;
 	Sym		*next;
-	Adr		*adr;
 };
 
 enum {
@@ -198,11 +193,6 @@ enum {
 	SNONE,
 	SIDECL,
 	SMEMB,
-};
-
-struct Reg {
-	Sym *sym;
-	Sym *next;
 };
 
 /* 
