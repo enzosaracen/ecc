@@ -152,6 +152,8 @@ char next(void)
 pop:
 	if(oldpeek != NOPEEK) {
 		c = oldpeek;
+		if(c == '\n')
+			src.line++;
 		oldpeek = NOPEEK;
 		return c;
 	} else if(nio > 1) {
@@ -356,11 +358,35 @@ void compile(char *file)
 /*
  *	preprocessor
  */
+#define ppskipspace() \
+	while(isspace(c = ppnext())) \
+		if(c == '\n') \
+			errorf("unexpected newline in macro definition");
+
+#define ppname() \
+	ppskipspace() \
+	if(!isalpha(c) && c != '_') \
+		errorf("macro names must be identifiers"); \
+	cp = lbuf; \
+	while(isalnum(c) || c == '_') { \
+		putbuf(cp++, c); \
+		c = ppnext(); \
+	} \
+	*cp = 0;
+
 void pp(void)
 {
-	/* note - ppname will error on a null directive, so maybe fix,
-	 * should probably not have ppname */
-	ppname();
+	char c, *cp;
+
+	while(isspace(c = ppnext()))
+		if(c == '\n')
+			return;
+	cp = lbuf;
+	while(!isspace(c)) {
+		putbuf(cp++, c);
+		c = ppnext();
+	}
+	*cp = 0;
 	if(strcmp(lbuf,	"include") == 0)
 		errorf("unimp");
 	else if(strcmp(lbuf, "define") == 0)
@@ -392,37 +418,36 @@ char ppnext(void)
 	return c;
 }
 
-void ppname(void)
-{
-	char c, *cp;
-
-	while(isspace(c = ppnext()))
-		if(c == '\n')
-			errorf("unexpected newline in macro definition");
-	if(!isalpha(c) && c != '_')
-		errorf("macro names must be identifiers");
-	cp = lbuf;
-	while(isalnum(c) || c == '_') {
-		putbuf(cp++, c);
-		c = ppnext();
-	}
-	*cp = 0;
-	if(!isspace(c))
-		errorf("whitespace required after macro name");
-	unget(c);
-}
-
 void ppdefine(void)
 {
 	Sym *s;
 	char c, *cp;
+	Marg *m;
 
 	ppname();
 	s = lookup();
 	if(s->mac != NULL)
 		errorf("redefinition of macro %s", s->name);
-	/* shouldn't limit macro size to size of lbuf, and have yet
-	 * to implement macro functions, but this works for now... */
+	if(c == '(') {
+		s->marg = emalloc(sizeof(Marg));
+		m = s->marg;
+loop:
+		ppname();
+		m->name = estrdup(lbuf);
+		unget(c);
+		ppskipspace();
+		if(c == ',') {
+			m->next = emalloc(sizeof(Marg));
+			m = m->next;
+			goto loop;
+		}
+		else if(c != ')')
+			errorf("expected ) in macro definition");
+		c = ppnext();
+	}
+	if(!isspace(c))
+		errorf("whitespace required after macro name");
+	/* shouldn't limit macro size to size of lbuf here */
 	cp = lbuf;
 	while((c = ppnext()) != '\n')
 		putbuf(cp++, c);
@@ -433,6 +458,7 @@ void ppdefine(void)
 void ppundef(void)
 {
 	Sym *s;
+	char c, *cp;
 
 	ppname();
 	s = lookup();

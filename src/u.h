@@ -6,6 +6,7 @@
 
 typedef struct Io Io;
 typedef struct Src Src;
+typedef struct Marg Marg;
 typedef struct Sym Sym;
 typedef struct Dstk Dstk;
 typedef struct Type Type;
@@ -22,6 +23,11 @@ struct Io {
 	int	len;
 };
 
+struct Marg {
+	char	*name;
+	Marg	*next;
+};
+
 struct Sym {
 	int		lex;
 	Type		*type;
@@ -33,6 +39,7 @@ struct Sym {
 	unsigned	block;
 	unsigned	nsue;
 	char		*mac;
+	Marg		*marg;
 	Sym		*next;
 };
 
@@ -219,7 +226,6 @@ int	yylex(void);
 void	compile(char *);
 void	pp(void);
 char	ppnext(void);
-void	ppname(void);
 void	ppdefine(void);
 void	ppundef(void);
 

@@ -66,7 +66,7 @@ void idecl(Sym *s, Type *t, int c)
 			errorf("auto redeclaration of %s", s->name);
 		push(s, DOTHER);
 	}
-	if(c != CTYPEDEF && c != CEXTERN && t->width == 0)
+	if(c != CTYPEDEF && c != CEXTERN && t->ttype != TFUNC && t->width == 0)
 		errorf("storage size of %s not known", s->name);
 	s->type = t;
 	s->class = c;
