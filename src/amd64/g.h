@@ -1,20 +1,21 @@
 #include "../u.h"
 
 enum {
-	AX	= 1<<0,
-	BX	= 1<<1,
-	CX	= 1<<2,
-	DX	= 1<<3,
-	SI	= 1<<4,
-	DI	= 1<<5,
-	R8	= 1<<6,
-	R9	= 1<<7,
-	R10	= 1<<8,
-	R11	= 1<<9,
-	R12	= 1<<10,
-	R13	= 1<<11,
-	R14	= 1<<12,
-	R15	= 1<<13,
+	NOREG,
+	AX,
+	BX,
+	CX,
+	DX,
+	SI,
+	DI,
+	R8,
+	R9,
+	R10,
+	R11,
+	R12,
+	R13,
+	R14,
+	R15,
 	SP,
 	BP,
 	IP,
@@ -91,4 +92,4 @@ void	pradr(Adr *);
 
 extern	char	*otab[];
 extern	Prog	*prog;
-extern	int	reg;
+extern	int	reg[R15];

@@ -235,7 +235,7 @@ void	cspec(int);
 int	islval(Node *);
 Type	*getmemb(Type *t, Sym *s);
 Node	*new(int, Node *, Node *);
-Node	*ntype(Node *);
+void	ntype(Node *);
 Node	*fold(Node *);
 char	*op2str(int);
 void	prtree(Node *, int);

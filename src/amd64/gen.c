@@ -1,6 +1,6 @@
 #include "g.h"
 
-int	reg = ~0;
+int	reg[R15];
 Prog	*prog;
 
 void load(Node *n)
@@ -82,6 +82,6 @@ void gen(Node *n)
 		ins(ILABEL, e, NULL);
 		break;
 	default:
-		gerrorf("unimplemented operand %s during code gen", op2str(o));
+		gerrorf("unimplemented op %s during code gen", op2str(o));
 	}
 }

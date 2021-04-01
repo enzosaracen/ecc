@@ -18,9 +18,10 @@ void areg(Node *n)
 {
 	int i;
 
-	for(i = AX; i <= R15; i <<= 1)
-		if(reg & i) {
+	for(i = AX; i <= R15; i++)
+		if(reg[i] == 0) {
 			n->reg = i;
+			reg[i] = 1;
 			return;
 		}
 	gerrorf("out of regs");
@@ -30,8 +31,8 @@ void freg(Node *n)
 {
 	if(n == NULL)
 		return;
-	reg &= ~n->reg;
-	n->reg = 0;
+	reg[n->reg] = 0;
+	n->reg = NOREG;
 }
 
 Adr *adr(void)
@@ -87,7 +88,7 @@ Adr *nadr(Node *n)
 {
 	if(n == NULL)
 		return NULL;
-	if(n->reg != 0)
+	if(n->reg != NOREG)
 		return radr(n->reg, n->type->width);
 	switch(n->op) {
 	case OID:
@@ -97,7 +98,7 @@ Adr *nadr(Node *n)
 	case OCONST:
 		return iadr(n->lval);
 	default:
-		gerrorf("what to do here in nadr...");
+		gerrorf("unimplemented node %s in nadr...", op2str(n->op));
 	}
 }
 
@@ -125,7 +126,7 @@ void pradr(Adr *a)
 		printf("%s", a->label);
 		break;
 	case AREG:
-		printf("%s", rtab(a->reg, a->regw));
+		printf("%%%s", rtab(a->reg, a->regw));
 		break;
 	case AOFF:
 		printf("-%d(%s)", a->offset, rtab(SP, 8));

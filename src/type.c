@@ -26,7 +26,7 @@ Node *new(int op, Node *l, Node *r)
 	n->r = r;
 	n->sym = NULL;
 	n->type = NULL;
-	n->reg = 0;
+	n->reg = 0 /* NOREG */;
 	return n;
 }
 
@@ -276,7 +276,7 @@ Type *getmemb(Type *t, Sym *s)
 	return NULL;
 }
 
-Node *ntype(Node *n)
+void ntype(Node *n)
 {
 	Type *lty;
 
@@ -348,7 +348,6 @@ Node *ntype(Node *n)
 	default:
 		errorf("unimplemented operator %s for ntype", op2str(n->op));
 	}
-	return n;
 }
 
 Node *fold(Node *n)
@@ -356,6 +355,8 @@ Node *fold(Node *n)
 	Node *ln, *rn;
 	long l, r;
 
+	if(n == NULL)
+		return NULL;
 	switch(n->op) {
 	case OPOS:
 	case ONEG:
@@ -388,6 +389,10 @@ Node *fold(Node *n)
 			l = n->type->width;
 			goto ret;
 		}
+		return n;
+	case OLIST:
+		n->l = fold(n->l);
+		n->r = fold(n->r);
 		return n;
 	default:
 		return n;
@@ -477,6 +482,7 @@ unop:
 ret:
 	n = new(OCONST, NULL, NULL);
 	n->lval = l;
+	ntype(n);
 	return n;
 }
 
