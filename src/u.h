@@ -3,10 +3,11 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 typedef struct Io Io;
 typedef struct Src Src;
-typedef struct Marg Marg;
+typedef struct Adr Adr;
 typedef struct Sym Sym;
 typedef struct Dstk Dstk;
 typedef struct Type Type;
@@ -23,11 +24,6 @@ struct Io {
 	int	len;
 };
 
-struct Marg {
-	char	*name;
-	Marg	*next;
-};
-
 struct Sym {
 	int		lex;
 	Type		*type;
@@ -38,8 +34,6 @@ struct Sym {
 	int		class;
 	unsigned	block;
 	unsigned	nsue;
-	char		*mac;
-	Marg		*marg;
 	Sym		*next;
 };
 
@@ -83,7 +77,6 @@ enum {
 		 * also allows incrementally building up struct and union width,
 		 * which consequently provides offsets for members
 		 * note - there is probably a better solution to this */
-	NTTYPE,
 };
 
 enum {
@@ -177,6 +170,8 @@ struct Node {
 	Type	*type;
 	long	lval;
 	char	*sval;
+	int	reg;
+	int	offset;
 };
 
 enum {
@@ -209,6 +204,7 @@ void	*emalloc(int);
 char	*estrdup(char*);
 void	panic(char *, ...);
 void	errorf(char *, ...);
+void	gerrorf(char *, ...);
 void	warnf(char *, ...);
 void	yyerror(char *);
 
@@ -217,17 +213,11 @@ void	yyerror(char *);
  */
 void	lexinit(void);
 Sym	*lookup(void);
-void	popio(void);
-void	pushio(FILE *, char *, int);
 char	next(void);
 void	unget(char);
 void	putbuf(char *, char);
 int	yylex(void);
 void	compile(char *);
-void	pp(void);
-char	ppnext(void);
-void	ppdefine(void);
-void	ppundef(void);
 
 /*
  * 	types.c
@@ -251,6 +241,11 @@ char	*op2str(int);
 void	prtree(Node *, int);
 char	*type2str(int);
 void	prtype(Type *, int);
+
+/*
+ *	amd64
+ */
+void	gen(Node *n);
 
 extern	FILE		*outfp;
 extern	int		bits;

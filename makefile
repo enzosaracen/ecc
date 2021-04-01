@@ -3,13 +3,16 @@ CFLAGS	= -Wall -Wextra -ggdb3
 OBJ	= src/lex.o \
 	  src/util.o \
 	  src/type.o \
-	  src/amd64.o \
-	  src/main.o
+	  src/main.o \
+	  src/amd64/gen.o \
+	  src/amd64/tab.o \
+	  src/amd64/sub.o
 
 HFILES	= src/u.h \
-	  src/y.tab.h
+	  src/y.tab.h \
+	  src/amd64/g.h
 
-src/%.o:	src/%.c $(HFILES)
+%.o:	%.c $(HFILES)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 ecc:	src/parse.o $(OBJ) $(HFILES)

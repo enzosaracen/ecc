@@ -1,5 +1,4 @@
 #include "u.h"
-#include "y.tab.h"
 
 int nlabel;
 
@@ -27,6 +26,7 @@ Node *new(int op, Node *l, Node *r)
 	n->r = r;
 	n->sym = NULL;
 	n->type = NULL;
+	n->reg = 0;
 	return n;
 }
 
@@ -38,8 +38,8 @@ char *newlabel(void)
 	n = snprintf(NULL, 0, ".L%d", nlabel);
 	if(n < 0)
 		goto err;
-	s = emalloc(n);
-	if(snprintf(s, n, ".L%d", nlabel) < 0)
+	s = emalloc(n+1);
+	if(snprintf(s, n+1, ".L%d", nlabel) < 0)
 err:		errorf("snprintf error...");
 	nlabel++;
 	return s;
@@ -118,6 +118,7 @@ void push(Sym *s, int dtype)
 		d->class = s->class;
 		break;
 	}
+	d->sym = s;
 	d->block = s->block;
 }
 
@@ -145,6 +146,8 @@ void pop(void)
 			break;
 		case DOTHER:
 			s = d->sym;
+			if(s == NULL)
+				errorf("s null");
 			s->type = d->type;
 			s->class = d->class;
 			s->block = d->block;
@@ -336,6 +339,14 @@ Node *ntype(Node *n)
 		if(n->type == NULL)
 			errorf("structure pointer has no member %s", n->sym->name);
 		break;
+	case OOROR:
+	case OANDAND:
+		if(!sametype(lty, n->r->type))
+			errorf("conversions not implemented");
+		n->type = lty;
+		break;
+	default:
+		errorf("unimplemented operator %s for ntype", op2str(n->op));
 	}
 	return n;
 }

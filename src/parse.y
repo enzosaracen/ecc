@@ -66,6 +66,7 @@ xdecl:
 	}
 	'{' slist '}'
 	{
+		gen($5);
 		pop();
 	}
 |	otspec ';'
@@ -562,7 +563,6 @@ slist:
 |	slist stmt
 	{
 		$$ = new(OLIST, $1, $2);
-		$$ = ntype($$);
 	}
 
 sel:
@@ -626,7 +626,6 @@ exprlist:
 |	exprlist ',' exprlist
 	{
 		$$ = new(OLIST, $1, $3);
-		$$ = ntype($$);
 	}
 
 expr:
@@ -909,7 +908,6 @@ oelist:
 |	oelist ',' oelist
 	{
 		$$ = new(OLIST, $1, $3);
-		$$ = ntype($$);
 	}
 
 tag:
@@ -921,6 +919,5 @@ id:
 	{
 		$$ = new(OID, NULL, NULL);
 		$$->sym = $1;
-		$$ = ntype($$);
 	}
 %%
