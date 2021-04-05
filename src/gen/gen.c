@@ -1,8 +1,5 @@
 #include "g.h"
 
-int	reg[R15];
-Prog	*prog;
-
 void load(Node *n)
 {
 	int o;
@@ -32,7 +29,6 @@ void bool(Node *n)
 	Node *e;
 
 	e = n->l;
-	e =
 }
 
 void gen(Node *n)
