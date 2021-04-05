@@ -10,11 +10,12 @@ void usage(void)
 int main(int argc, char *argv[])
 {
 	int opt;
+	char *out;
 
 	while((opt = getopt(argc, argv, flagstr)) != -1)
 		switch(opt) {
 		case 'o':
-			errorf("optind: %d", optind);
+			out = argv[optind];
 			break;
 		default:
 			usage();

@@ -80,6 +80,7 @@ char	*rtab(int, int);
 /*
  *	sub.c
  */
+void	gerrorf(char *, ...);
 void	ins(int, Adr *, Adr *);
 void	areg(Node *);
 void	freg(Node *);

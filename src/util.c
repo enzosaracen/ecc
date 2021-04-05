@@ -31,5 +31,3 @@ void panic(char *fmt, ...)
 	fprintf(stderr, "\n");
 	exit(1);
 }
-
-

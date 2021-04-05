@@ -33,6 +33,3 @@ void	gen(Node *n);
 void	*emalloc(int);
 char	*estrdup(char*);
 void	panic(char *, ...);
-void	errorf(char *, ...);
-void	gerrorf(char *, ...);
-void	warnf(char *, ...);
