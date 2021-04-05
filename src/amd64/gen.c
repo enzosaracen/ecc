@@ -27,18 +27,25 @@ void load(Node *n)
 	ins(o, a, nadr(n));
 }
 
+void bool(Node *n)
+{
+	Node *e;
+
+	e = n->l;
+	e =
+}
+
 void gen(Node *n)
 {
 	int o;
-	Adr *a, *t, *f, *e;
+	Adr *a, *a1, *t, *f, *e;
 	Node *l, *r;
 
 	if(n == NULL)
 		return;
 	l = n->l;
 	r = n->r;
-	o = n->op;
-	switch(o) {
+	switch(n->op) {
 	case OID:
 	case OCONST:
 		load(n);
@@ -46,6 +53,10 @@ void gen(Node *n)
 	case OLIST:
 		gen(l);
 		gen(r);
+		break;
+	case OIF:
+	case OCOND:
+		bool(n);
 		break;
 	case OOROR:
 	case OANDAND:
@@ -81,7 +92,33 @@ void gen(Node *n)
 		ins(IXOR, a, a);
 		ins(ILABEL, e, NULL);
 		break;
+	case OADD:
+		gen(l);
+		a = nadr(l);
+		gen(r);
+		a1 = nadr(r);
+		if(a->regw != a1->regw)
+			gerrorf("type inconsistency in gen, fix frontend");
+		switch(a->regw) {
+		case 1:
+			o = IADDB;
+			break;
+		case 2:
+			o = IADDW;
+			break;
+		case 4:
+			o = IADDL;
+			break;
+		case 8:
+			o = IADDQ;
+			break;
+		default:
+			gerrorf("bad type for add in gen, fix frontedn");
+		}
+		ins(o, a, a1);
+		n->reg = a->reg;
+		break;
 	default:
-		gerrorf("unimplemented op %s during code gen", op2str(o));
+		gerrorf("unimplemented op %s during code gen", op2str(n->op));
 	}
 }

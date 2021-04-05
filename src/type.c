@@ -346,7 +346,7 @@ void ntype(Node *n)
 		n->type = lty;
 		break;
 	default:
-		errorf("unimplemented operator %s for ntype", op2str(n->op));
+		errorf("unimplemented op %s for ntype", op2str(n->op));
 	}
 }
 

@@ -68,6 +68,7 @@ struct Prog {
 /*
  *	gen.c
  */
+void	load(Node *);
 void	gen(Node *);
 
 /*
