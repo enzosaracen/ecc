@@ -1,17 +1,5 @@
 #include "g.h"
 
-void gerrorf(char *fmt, ...)
-{
-	va_list arg;
-
-	fprintf(stderr, "%s: \033[0;31;1merror:\033[0m ", src.name);
-	va_start(arg, fmt);
-	vfprintf(stderr, fmt, arg);
-	va_end(arg);
-	fprintf(stderr, "\n");
-	exit(1);
-}
-
 void ins(int op, Adr *f, Adr *t)
 {
 	Prog *p;

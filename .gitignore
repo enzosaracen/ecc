@@ -1,8 +1,7 @@
 *.o
-src/par/y.tab.h
-src/par/y.tab.c
+src/y.tab.h
+src/y.tab.c
 ecc
-evm
 a.out
 test.c
 test.s

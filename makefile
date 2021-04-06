@@ -1,41 +1,30 @@
 CC 	= gcc
 CFLAGS	= -Wall -Wextra -ggdb3
-ECCO	= src/cmd/ecc.o \
+OBJ	= src/lex.o \
 	  src/util.o \
-	  src/par/type.o \
-	  src/par/lex.o \
-	  src/par/par.o \
-	  src/gen/gen.o \
-	  src/gen/sub.o \
-	  src/gen/tab.o
-
-EVMO	= src/cmd/evm.o \
-	  src/util.o
+	  src/type.o \
+	  src/main.o \
+	  src/amd64/gen.o \
+	  src/amd64/tab.o \
+	  src/amd64/sub.o
 
 HFILES	= src/u.h \
-	  src/par/y.tab.h \
-	  src/gen/g.h \
-	  src/evm/v.h
-
-all:	ecc \
-	evm
+	  src/y.tab.h \
+	  src/amd64/g.h
 
 %.o:	%.c $(HFILES)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-ecc:	$(ECCO) $(HFILES)
-	$(CC) $(CFLAGS) $(ECCO) -o $@
+ecc:	src/parse.o $(OBJ) $(HFILES)
+	$(CC) $(CFLAGS) $(OBJ) src/parse.o -o $@
 
-evm:	$(EVMO) $(HFILES)
-	$(CC) $(CFLAGS) $(EVMO) -o $@
-
-src/y.tab.h src/par/par.o:	src/par/par.y src/u.h
-	yacc -vd src/par/par.y
-	mv -f y.tab.h y.tab.c src/par/
-	$(CC) $(CFLAGS) -o src/par/par.o -c src/par/y.tab.c
-	rm -f src/par/y.tab.c
+src/y.tab.h src/parse.o:	src/parse.y src/u.h
+	yacc -vd src/parse.y
+	mv -f y.tab.h y.tab.c src
+	$(CC) $(CFLAGS) -o src/parse.o -c src/y.tab.c
+	rm -f src/y.tab.c
 
 .PHONY:	clean
 
 clean:
-	rm -f ecc evm $(EVMO) $(ECCO) src/par/y.tab.c
+	rm -f ecc $(OBJ) src/parse.o src/y.tab.c

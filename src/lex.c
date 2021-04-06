@@ -1,4 +1,4 @@
-#include "p.h"
+#include "u.h"
 #include "y.tab.h"
 
 #define NHASH 1024
@@ -16,7 +16,7 @@ struct {
 struct {
 	char *s;
 	int lex;
-} resv[] = {
+} rsvd[] = {
 	{"sizeof",	LSIZEOF},
 	{"void",	LVOID},
 	{"char",	LCHAR},
@@ -52,37 +52,6 @@ struct {
 	{0},
 };
 
-void errorf(char *fmt, ...)
-{
-	va_list arg;
-
-	fprintf(stderr, "%s:%d: \033[0;31;1merror:\033[0m ", src.name, src.line);
-	va_start(arg, fmt);
-	vfprintf(stderr, fmt, arg);
-	va_end(arg);
-	fprintf(stderr, "\n");
-	exit(1);
-}
-
-void warnf(char *fmt, ...)
-{
-	va_list arg;
-
-	fprintf(stderr, "%s:%d: \033[0;33;1mwarning:\033[0m ", src.name, src.line);
-	va_start(arg, fmt);
-	vfprintf(stderr, fmt, arg);
-	va_end(arg);
-	fprintf(stderr, "\n");
-}
-
-void yyerror(char *s)
-{
-	if(lastname)
-		errorf("%s near %s", s, lastname);
-	else
-		errorf("%s", s);
-}
-
 void lexinit(void)
 {
 	int i, j;
@@ -90,12 +59,12 @@ void lexinit(void)
 
 	peek = NOPEEK;
 	src.line = 1;
-	for(i = 0; resv[i].s; i++) {
-		for(j = 0; resv[i].s[j]; j++)
-			lbuf[j] = resv[i].s[j];
+	for(i = 0; rsvd[i].s; i++) {
+		for(j = 0; rsvd[i].s[j]; j++)
+			lbuf[j] = rsvd[i].s[j];
 		lbuf[j] = 0;
 		s = lookup();
-		s->lex = resv[i].lex;
+		s->lex = rsvd[i].lex;
 	}
 	lastname = NULL;
 }
@@ -325,6 +294,7 @@ lexid:
 void compile(char *file)
 {
 	src.name = file;
+	src.line = 0;
 	fin.fp = fopen(file, "r");
 	if(fin.fp == NULL)
 		panic("cannot open %s for reading", file);

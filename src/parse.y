@@ -1,5 +1,5 @@
 %{
-#include "p.h"
+#include "u.h"
 %}
 %union {
 	 Sym	*sym;
@@ -922,4 +922,3 @@ id:
 		$$->sym = $1;
 	}
 %%
-

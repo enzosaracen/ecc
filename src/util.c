@@ -31,3 +31,46 @@ void panic(char *fmt, ...)
 	fprintf(stderr, "\n");
 	exit(1);
 }
+
+void errorf(char *fmt, ...)
+{
+	va_list arg;
+
+	fprintf(stderr, "%s:%d: \033[0;31;1merror:\033[0m ", src.name, src.line);
+	va_start(arg, fmt);
+	vfprintf(stderr, fmt, arg);
+	va_end(arg);
+	fprintf(stderr, "\n");
+	exit(1);
+}
+
+void gerrorf(char *fmt, ...)
+{
+	va_list arg;
+
+	fprintf(stderr, "%s: \033[0;31;1merror:\033[0m ", src.name);
+	va_start(arg, fmt);
+	vfprintf(stderr, fmt, arg);
+	va_end(arg);
+	fprintf(stderr, "\n");
+	exit(1);
+}
+
+void warnf(char *fmt, ...)
+{
+	va_list arg;
+
+	fprintf(stderr, "%s:%d: \033[0;33;1mwarning:\033[0m ", src.name, src.line);
+	va_start(arg, fmt);
+	vfprintf(stderr, fmt, arg);
+	va_end(arg);
+	fprintf(stderr, "\n");
+}
+
+void yyerror(char *s)
+{
+	if(lastname)
+		errorf("%s near %s", s, lastname);
+	else
+		errorf("%s", s);
+}

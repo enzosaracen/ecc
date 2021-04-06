@@ -1,4 +1,3 @@
-#define EXTERN
 #include "g.h"
 
 Type *types[] = {
@@ -14,22 +13,6 @@ Type *types[] = {
 	[TFLOAT]	= &(Type){.ttype = TFLOAT,		.width = 4},
 	[TDOUBLE]	= &(Type){.ttype = TDOUBLE,		.width = 8},
 	[TPTR]		= &(Type){.ttype = TPTR,		.width = 8},
-};
-
-char *otab[] = {
-	[IADDB]		= "addb",
-	[IADDL]		= "addl",
-	[IADDQ]		= "addq",
-	[IADDW]		= "addw",
-	[IJMP]		= "jmp",
-	[IJNZ]		= "jnz",
-	[IJZ]		= "jz",
-	[IMOVB]		= "movb",
-	[IMOVL]		= "movl",
-	[IMOVQ]		= "movq",
-	[IMOVW]		= "movw",
-	[ITEST]		= "test",
-	[IXOR]		= "xor",
 };
 
 char *rtab(int r, int w)
@@ -167,4 +150,18 @@ char *rtab(int r, int w)
 	gerrorf("bad in rtab...");
 }
 
-
+char *otab[] = {
+	[IADDB]		= "addb",
+	[IADDL]		= "addl",
+	[IADDQ]		= "addq",
+	[IADDW]		= "addw",
+	[IJMP]		= "jmp",
+	[IJNZ]		= "jnz",
+	[IJZ]		= "jz",
+	[IMOVB]		= "movb",
+	[IMOVL]		= "movl",
+	[IMOVQ]		= "movq",
+	[IMOVW]		= "movw",
+	[ITEST]		= "test",
+	[IXOR]		= "xor",
+};

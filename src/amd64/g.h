@@ -1,5 +1,4 @@
 #include "../u.h"
-#include "../par/p.h"
 
 enum {
 	NOREG,
@@ -80,7 +79,6 @@ char	*rtab(int, int);
 /*
  *	sub.c
  */
-void	gerrorf(char *, ...);
 void	ins(int, Adr *, Adr *);
 void	areg(Node *);
 void	freg(Node *);
@@ -93,6 +91,6 @@ Adr	*nadr(Node *);
 void	prins(Prog *);
 void	pradr(Adr *);
 
-EXTERN	Prog	*prog;
-EXTERN	int	reg[R15];
-EXTERN	char	*otab[];
+extern	char	*otab[];
+extern	Prog	*prog;
+extern	int	reg[R15];

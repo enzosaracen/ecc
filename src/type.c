@@ -1,4 +1,4 @@
-#include "p.h"
+#include "u.h"
 
 int nlabel;
 
