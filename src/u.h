@@ -5,6 +5,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifndef EXTERN
+#define EXTERN extern
+#endif
+
 typedef struct Io Io;
 typedef struct Src Src;
 typedef struct Adr Adr;
@@ -247,13 +251,12 @@ void	prtype(Type *, int);
  */
 void	gen(Node *n);
 
-extern	FILE		*outfp;
-extern	int		bits;
-extern	int		lastclass;
-extern	Type		*lasttype;
-extern	Type		*types[];
-extern	char		*lastname;
-extern	Dstk		*declstk;
-extern	unsigned	block;
-extern	unsigned	nsue;
-extern	Src		src;
+EXTERN	int		bits;
+EXTERN	int		lastclass;
+EXTERN	Type		*lasttype;
+EXTERN	Type		*types[];
+EXTERN	char		*lastname;
+EXTERN	Dstk		*declstk;
+EXTERN	unsigned	block;
+EXTERN	unsigned	nsue;
+EXTERN	Src		src;

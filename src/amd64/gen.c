@@ -32,7 +32,6 @@ void bool(Node *n)
 	Node *e;
 
 	e = n->l;
-	e =
 }
 
 void gen(Node *n)

@@ -15,16 +15,16 @@ HFILES	= src/u.h \
 %.o:	%.c $(HFILES)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-ecc:	src/parse.o $(OBJ) $(HFILES)
-	$(CC) $(CFLAGS) $(OBJ) src/parse.o -o $@
+ecc:	src/par.o $(OBJ) $(HFILES)
+	$(CC) $(CFLAGS) $(OBJ) src/par.o -o $@
 
-src/y.tab.h src/parse.o:	src/parse.y src/u.h
-	yacc -vd src/parse.y
+src/y.tab.h src/par.o:	src/par.y src/u.h
+	yacc -vd src/par.y
 	mv -f y.tab.h y.tab.c src
-	$(CC) $(CFLAGS) -o src/parse.o -c src/y.tab.c
+	$(CC) $(CFLAGS) -o src/par.o -c src/y.tab.c
 	rm -f src/y.tab.c
 
 .PHONY:	clean
 
 clean:
-	rm -f ecc $(OBJ) src/parse.o src/y.tab.c
+	rm -f ecc $(OBJ) src/par.o src/y.tab.c
