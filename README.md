@@ -1,6 +1,6 @@
 k&r c compiler
 
-old compiler project targeting most of k&r c
+old compiler project for k&r c
 
 front-end of compiler is mostly working, but
 code generation is not complete
