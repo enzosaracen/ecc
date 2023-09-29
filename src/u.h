@@ -41,6 +41,12 @@ struct Sym {
 	Sym		*next;
 };
 
+/*
+ * new decls in blocks overwrite syms in the hash table,
+ * but the old sym info is saved on the decl stack, and on
+ * block exit decls from the decl stack are popped and the
+ * syms are restored to their previous values
+ */
 enum {
 	DOTHER,
 	DTAG,
