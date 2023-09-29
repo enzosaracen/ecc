@@ -67,7 +67,8 @@ xdecl:
 	'{' slist '}'
 	{
 		fold($5);
-		gen($5);
+		// generation not supported
+		//gen($5);
 		pop();
 	}
 |	otspec ';'
@@ -885,6 +886,9 @@ pexpr:
 		ntype($$);
 	}
 |	id
+	{
+		$$->type = $$->sym->type;
+	}
 |	LNUM
 	{
 		$$ = new(OCONST, NULL, NULL);

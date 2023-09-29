@@ -27,11 +27,50 @@ void load(Node *n)
 	ins(o, a, nadr(n));
 }
 
-void bool(Node *n)
+void bool(int true, Node *n)
 {
-	Node *e;
+	Adr *a;
 
-	e = n->l;
+	switch(n->op) {
+	case OANDAND:
+		if(!true)
+			goto or;
+and:
+		bool(1, n->l);
+		a = nadr(n->l);
+		ins(ITEST, a, a);
+		/* need to have false and true exits consistent for each outside call of bool,
+		 * but not change on recurse, probably just have some globals controlled by the caller */
+		ins(IJZ, /* false exit */ NULL, NULL);
+		freg(n->l);
+		bool(1, n->r);
+		a = nadr(n->r);
+		ins(ITEST, a, a);
+		ins(IJZ, NULL, NULL);
+		freg(n->r);
+		break;
+	case OOROR:
+		if(!true)
+			goto and;
+or:
+		bool(1, n->l);
+		a = nadr(n->l);
+		ins(ITEST, a, a);
+		ins(IJNZ, NULL, NULL);
+		freg(n->l);
+		bool(1, n->r);
+		a = nadr(n->r);
+		ins(ITEST, a, a);
+		ins(IJNZ, NULL, NULL);
+		freg(n->r);
+		break;
+	case ONOT:
+		bool(!true, n->l);
+		break;
+	default:
+		gen(n);
+		break;
+	}
 }
 
 void gen(Node *n)
@@ -55,11 +94,11 @@ void gen(Node *n)
 		break;
 	case OIF:
 	case OCOND:
-		bool(n);
+		bool(1, n->l);
 		break;
 	case OOROR:
 	case OANDAND:
-		t = ladr(newlabel());
+		/*t = ladr(newlabel());
 		f = ladr(newlabel());
 		e = ladr(newlabel());
 		gen(l);
@@ -84,12 +123,12 @@ void gen(Node *n)
 		areg(n);
 		a = nadr(n);
 		ins(ILABEL, t, NULL);
-		/* add mov subroutine to branch out to dif widths n stuff */
 		ins(IMOVQ, iadr(1), a);
 		ins(IJMP, e, NULL);
 		ins(ILABEL, f, NULL);
 		ins(IXOR, a, a);
-		ins(ILABEL, e, NULL);
+		ins(ILABEL, e, NULL);*/
+		bool(1, n);
 		break;
 	case OADD:
 		gen(l);
@@ -112,7 +151,7 @@ void gen(Node *n)
 			o = IADDQ;
 			break;
 		default:
-			gerrorf("bad type for add in gen, fix frontedn");
+			gerrorf("bad type for add in gen, fix frontend");
 		}
 		ins(o, a, a1);
 		n->reg = a->reg;

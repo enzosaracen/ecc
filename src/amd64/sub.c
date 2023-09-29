@@ -113,7 +113,7 @@ void prins(Prog *p)
 	if(p->from != NULL)
 		pradr(p->from);
 	if(p->to != NULL) {
-		printf(",\t");
+		printf(", ");
 		pradr(p->to);
 	}
 	printf("\n");
@@ -129,7 +129,10 @@ void pradr(Adr *a)
 		printf("%%%s", rtab(a->reg, a->regw));
 		break;
 	case AOFF:
-		printf("-%d(%s)", a->offset, rtab(SP, 8));
+		if(a->offset != 0)
+			printf("-%d(%s)", a->offset, rtab(BP, 8));
+		else
+			printf("(%s)", rtab(BP, 8));
 		break;
 	case AIMM:
 		printf("$%d", a->imm);
